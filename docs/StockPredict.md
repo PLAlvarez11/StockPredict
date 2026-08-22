@@ -689,41 +689,41 @@ A continuación se presentan los mockups del sistema StockPredict, correspondien
 
 **Login**
 
-![Mockup Login](./assets/mockups/login.jpg)
+![Mockup Login](../assets/mockups/login..jpg)
 
 **Registro**
 
-![Mockup Registro](./assets/mockups/registro.jpg)
+![Mockup Registro](../assets/mockups/registro.jpg)
 
 **Recuperar contraseña**
 
-![Mockup Recuperar contraseña](./assets/mockups/recuperar-contrasena.jpg)
+![Mockup Recuperar contraseña](../assets/mockups/recuperar-contraseña.jpg)
 
 **Restablecer contraseña**
 
-![Mockup Restablecer contraseña](./assets/mockups/restablecer-contrasena.jpg)
+![Mockup Restablecer contraseña](../assets/mockups/restablecer-contrasena.jpg)
 
 **Dashboard**
 
-![Mockup Dashboard](./assets/mockups/dashboard.jpg)
+![Mockup Dashboard](../assets/mockups/dashboard.jpg)
 
 **Categorías**
 
-![Mockup Categorías](./assets/mockups/categorias.jpg)
+![Mockup Categorías](../assets/mockups/categorias.jpg)
 
 **Productos**
 
-![Mockup Productos](./assets/mockups/productos.jpg)
+![Mockup Productos](../assets/mockups/productos.jpg)
 
 **Registrar venta**
 
-![Mockup Registrar venta](./assets/mockups/registrar-venta.jpg)
+![Mockup Registrar venta](../assets/mockups/registrar-venta.jpg)
 
 **Inventario**
 
-![Mockup Inventario](./assets/mockups/inventario.jpg)
+![Mockup Inventario](../assets/mockups/inventario.jpg)
 
 **Predicción de compra**
 
-![Mockup Predicción de compra](./assets/mockups/prediccion-compra.jpg)
+![Mockup Predicción de compra](../assets/mockups/prediccion-compra.jpg)
 
