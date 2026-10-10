@@ -19,9 +19,8 @@ StockPredict ayuda a llevar el control del catálogo de productos, registrar las
 
 ## Documentación
 
-Toda la documentación técnica del proyecto está en la carpeta [`/docs`](./docs), incluyendo el Documento de Análisis y Diseño (DAD), donde se detalla el alcance, los requisitos, el diseño de base de datos y los mockups de las pantallas.
+La documentación técnica (Documento de Análisis y Diseño, análisis, arquitectura, decisiones y roadmap) no se incluye en este repositorio: se entrega por separado. El DAD detalla el alcance, los requisitos, el diseño de base de datos y los casos de prueba.
 
-- [DAD - Documento de Análisis y Diseño](./docs/StockPredict.md)
 - [Mockups de las pantallas](./assets/mockups)
 
 ## Estructura del repositorio
