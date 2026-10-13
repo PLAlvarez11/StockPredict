@@ -1,12 +1,114 @@
-import { ArrowRight, ShoppingCartSimple, SignOut } from '@phosphor-icons/react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  ArrowRight,
+  CheckCircle,
+  FolderSimplePlus,
+  Package,
+  PlusCircle,
+  ShoppingCartSimple,
+  SignOut,
+  Sliders,
+  Warning,
+} from '@phosphor-icons/react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Dialog } from '../../components/ui/Dialog';
+import { IconBadge } from '../../components/ui/IconBadge';
 import { Notice } from '../../components/ui/Notice';
 import { authApi } from '../auth/api';
 import { CLAVE_SESION, useSesion } from '../auth/useSesion';
+import { prediccionApi } from '../prediccion/api';
+import { CLAVE_PREDICCION } from '../prediccion/PrediccionPage';
+import { useProductos } from '../productos/hooks';
+
+const ATAJOS = [
+  { ruta: '/productos/nuevo', etiqueta: 'Crear producto', Icono: PlusCircle },
+  { ruta: '/categorias/nueva', etiqueta: 'Crear categoría', Icono: FolderSimplePlus },
+  { ruta: '/inventario/compra', etiqueta: 'Registrar compra', Icono: Package },
+  { ruta: '/inventario/ajuste', etiqueta: 'Ajustar stock', Icono: Sliders },
+] as const;
+
+function Resumen() {
+  const productos = useProductos();
+  const cargando = productos.isPending;
+  const datos = productos.data;
+
+  return (
+    <section className="stats" aria-label="Resumen del inventario">
+      <div className="stat card elev-sm">
+        <div className="stat-label stat-ok">
+          <Package size={14} weight="bold" aria-hidden="true" />
+          Activos
+        </div>
+        <div className="stat-value">{cargando ? '–' : (datos?.total ?? '–')}</div>
+        <div className="stat-sub">productos</div>
+      </div>
+      <div className="stat card stat-warn">
+        <div className="stat-label">
+          <Warning size={14} weight="bold" aria-hidden="true" />
+          Stock bajo
+        </div>
+        <div className="stat-value">{cargando ? '–' : (datos?.stockBajo ?? '–')}</div>
+        <div className="stat-sub">por revisar</div>
+      </div>
+      {productos.isError && (
+        <p className="field-error stats-error" role="alert">
+          No pudimos cargar el resumen.{' '}
+          <button type="button" className="enlace" onClick={() => void productos.refetch()}>
+            Reintentar
+          </button>
+        </p>
+      )}
+    </section>
+  );
+}
+
+function PorComprar() {
+  const prediccion = useQuery({
+    queryKey: CLAVE_PREDICCION,
+    queryFn: prediccionApi.obtener,
+    staleTime: 0,
+  });
+  const datos = prediccion.data;
+  if (prediccion.isPending) return <div className="skeleton" style={{ height: 120 }} />;
+  if (prediccion.isError || !datos || datos.totalActivos === 0) return null;
+
+  const urgentes = datos.items.filter((i) => i.estado === 'comprar').slice(0, 3);
+
+  return (
+    <section className="card elev-sm por-comprar" aria-labelledby="por-comprar-titulo">
+      <div className="por-comprar-cabecera">
+        <h2 id="por-comprar-titulo" className="seccion-titulo">
+          Para comprar esta semana
+        </h2>
+        <span className="por-comprar-total">
+          {datos.totalAComprar} de {datos.totalActivos}
+        </span>
+      </div>
+      {urgentes.length === 0 ? (
+        <p className="por-comprar-vacio">
+          <CheckCircle size={18} weight="bold" aria-hidden="true" />
+          No es necesario comprar nada por ahora.
+        </p>
+      ) : (
+        <ul className="por-comprar-lista">
+          {urgentes.map((i) => (
+            <li key={i.producto.id}>
+              <IconBadge icono={i.producto.categoria.icono} tamano={16} />
+              <span className="por-comprar-nombre">{i.producto.nombre}</span>
+              <span className="tag tag-danger">{i.cantidadAComprar} u.</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <Link to="/prediccion" className="por-comprar-enlace">
+        Ver predicción completa
+        <ArrowRight size={14} weight="bold" aria-hidden="true" />
+      </Link>
+    </section>
+  );
+}
 
 export function InicioPage() {
   const { data: usuario } = useSesion();
@@ -45,6 +147,19 @@ export function InicioPage() {
           </span>
           <ArrowRight size={20} weight="bold" aria-hidden="true" />
         </Link>
+
+        <Resumen />
+
+        <nav aria-label="Accesos rápidos" className="atajos">
+          {ATAJOS.map(({ ruta, etiqueta, Icono }) => (
+            <Link key={ruta} to={ruta} className="atajo">
+              <Icono size={20} weight="bold" aria-hidden="true" />
+              <span>{etiqueta}</span>
+            </Link>
+          ))}
+        </nav>
+
+        <PorComprar />
       </div>
       <Dialog
         abierto={confirmando}

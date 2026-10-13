@@ -49,6 +49,20 @@ describe('productos', () => {
     expect(Object.fromEntries(niveles)).toEqual({ 0: 'agotado', 1: 'bajo', 3: 'bajo', 4: 'ok' });
   });
 
+  it('RF28: el listado informa cuántos productos activos tienen stock bajo (≤ 3, incluye agotados)', async () => {
+    for (const stock of [0, 1, 3, 4, 20]) {
+      await crear({ nombre: `Producto ${stock}`, categoriaId: ropa.id, stockInicial: stock });
+    }
+    const inactivo = (await crear({ nombre: 'Inactivo', categoriaId: ropa.id, stockInicial: 0 }))
+      .body;
+    await agente.delete(`/api/v1/productos/${inactivo.id}`);
+    const todos = await agente.get('/api/v1/productos');
+    expect(todos.body.total).toBe(5);
+    expect(todos.body.stockBajo).toBe(3);
+    const otra = await iniciarSesionDePrueba(app, 'otra@ejemplo.com');
+    expect((await otra.get('/api/v1/productos')).body.stockBajo).toBe(0);
+  });
+
   it('P02 y P03: edita nombre y categoría sin tocar el stock', async () => {
     const { body } = await crear({ nombre: 'Blusa', categoriaId: ropa.id, stockInicial: 7 });
     const res = await agente

@@ -1,4 +1,4 @@
-import { Package } from '@phosphor-icons/react';
+import { Package, Sliders } from '@phosphor-icons/react';
 import { Link, useLocation } from 'react-router-dom';
 import { ScreenHeader } from '../../components/layout/ScreenHeader';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -61,6 +61,10 @@ export function InventarioPage() {
         <Link to="/inventario/compra" className="accion-tarjeta">
           <Package size={22} weight="bold" aria-hidden="true" />
           <span>Registrar compra</span>
+        </Link>
+        <Link to="/inventario/ajuste" className="accion-tarjeta">
+          <Sliders size={22} weight="bold" aria-hidden="true" />
+          <span>Ajustar stock manual</span>
         </Link>
       </div>
       {lista}

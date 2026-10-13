@@ -13,6 +13,7 @@ export interface Producto {
 export interface ListaProductos {
   datos: Producto[];
   total: number;
+  stockBajo: number;
   page: number;
   limit: number;
 }

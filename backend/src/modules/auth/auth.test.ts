@@ -1,7 +1,9 @@
+import type { Express } from 'express';
 import request from 'supertest';
-import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { crearApp } from '../../app.js';
 import { prisma } from '../../shared/db/prisma.js';
+import { authRepository } from './auth.repository.js';
 import { crearMailerFalso, limpiarBase } from '../../../test/helpers.js';
 
 const limites = {
@@ -24,6 +26,15 @@ beforeEach(async () => {
 afterAll(async () => {
   await prisma.$disconnect();
 });
+
+const esperarTareas = (aplicacion: Express = app) =>
+  (aplicacion.locals['esperarTareas'] as () => Promise<void>)();
+
+const pedirRecuperacion = async (correo: string, aplicacion: Express = app) => {
+  const res = await request(aplicacion).post('/api/v1/auth/recuperar').send({ correo });
+  await esperarTareas(aplicacion);
+  return res;
+};
 
 const registrar = (datos: object = VALIDO) =>
   request(app).post('/api/v1/auth/registro').send(datos);
@@ -139,7 +150,7 @@ describe('AU03 y AU06 recuperar', () => {
   });
 
   it('AU03: correo existente envía un enlace con token y guarda solo su hash', async () => {
-    const res = await request(app).post('/api/v1/auth/recuperar').send({ correo: VALIDO.correo });
+    const res = await pedirRecuperacion(VALIDO.correo);
     expect(res.status).toBe(202);
     expect(mailer.enviados).toHaveLength(1);
     expect(mailer.enviados[0]?.para).toBe(VALIDO.correo);
@@ -154,23 +165,43 @@ describe('AU03 y AU06 recuperar', () => {
   });
 
   it('AU06: correo inexistente no envía correo y responde igual que el existente', async () => {
-    const existente = await request(app)
-      .post('/api/v1/auth/recuperar')
-      .send({ correo: VALIDO.correo });
+    const existente = await pedirRecuperacion(VALIDO.correo);
     mailer.enviados.length = 0;
-    const inexistente = await request(app)
-      .post('/api/v1/auth/recuperar')
-      .send({ correo: 'nadie@ejemplo.com' });
+    const inexistente = await pedirRecuperacion('nadie@ejemplo.com');
     expect(inexistente.status).toBe(existente.status);
     expect(inexistente.body).toEqual(existente.body);
     expect(mailer.enviados).toHaveLength(0);
   });
 
+  it('P2: la respuesta no espera el trabajo de BD ni el envío: el tiempo no depende de si el correo existe', async () => {
+    const original = authRepository.invalidarTokens;
+    const lenta = vi
+      .spyOn(authRepository, 'invalidarTokens')
+      .mockImplementation(((...args: Parameters<typeof original>) =>
+        new Promise((r) => setTimeout(r, 400)).then(() =>
+          original(...args),
+        )) as unknown as typeof original);
+    try {
+      const t0 = performance.now();
+      const existente = await request(app)
+        .post('/api/v1/auth/recuperar')
+        .send({ correo: VALIDO.correo });
+      const ms = performance.now() - t0;
+      expect(existente.status).toBe(202);
+      expect(ms).toBeLessThan(300);
+      expect(mailer.enviados).toHaveLength(0);
+      await esperarTareas();
+      expect(mailer.enviados).toHaveLength(1);
+    } finally {
+      lenta.mockRestore();
+    }
+  });
+
   it('un token nuevo invalida el anterior', async () => {
-    await request(app).post('/api/v1/auth/recuperar').send({ correo: VALIDO.correo });
+    await pedirRecuperacion(VALIDO.correo);
     const primero = extraerToken();
     mailer.enviados.length = 0;
-    await request(app).post('/api/v1/auth/recuperar').send({ correo: VALIDO.correo });
+    await pedirRecuperacion(VALIDO.correo);
     const viejo = await request(app)
       .post('/api/v1/auth/restablecer')
       .send({ token: primero, contrasena: 'NuevaClave123' });
@@ -185,7 +216,7 @@ describe('AU03 y AU06 recuperar', () => {
 describe('AU04 restablecer', () => {
   beforeEach(async () => {
     await registrar();
-    await request(app).post('/api/v1/auth/recuperar').send({ correo: VALIDO.correo });
+    await pedirRecuperacion(VALIDO.correo);
   });
 
   it('cambia la contraseña, permite entrar con la nueva y no con la anterior', async () => {
@@ -260,6 +291,7 @@ describe('protecciones', () => {
     expect((await pedir()).status).toBe(202);
     expect((await pedir()).status).toBe(202);
     expect((await pedir()).status).toBe(429);
+    await esperarTareas(limitada);
   });
 
   it('rechaza mutaciones desde un origen no permitido', async () => {

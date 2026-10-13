@@ -34,6 +34,26 @@ const aPublico = (u: { id: number; nombre: string; correo: string }): UsuarioPub
 export function crearAuthService({ hasher, mailer }: Dependencias) {
   const hashFicticio = hasher.hash('contrasena-ficticia-para-igualar-tiempos');
 
+  const enCurso = new Set<Promise<void>>();
+
+  const procesarRecuperacion = async (datos: RecuperarInput): Promise<void> => {
+    const usuario = await authRepository.buscarPorCorreo(datos.correo);
+    if (!usuario) return;
+
+    await authRepository.invalidarTokens(usuario.id);
+    const token = randomBytes(32).toString('base64url');
+    await authRepository.crearToken({
+      usuarioId: usuario.id,
+      tokenHash: sha256(token),
+      expiraEn: new Date(Date.now() + env.RESET_TOKEN_MINUTES * 60_000),
+    });
+
+    const enlace = `${env.APP_BASE_URL}/restablecer?token=${token}`;
+    await mailer.enviar(
+      correoRecuperacion(usuario.correo, usuario.nombre, enlace, env.RESET_TOKEN_MINUTES),
+    );
+  };
+
   return {
     async registrar(datos: RegistroInput): Promise<UsuarioPublico> {
       const existente = await authRepository.buscarPorCorreo(datos.correo);
@@ -73,24 +93,18 @@ export function crearAuthService({ hasher, mailer }: Dependencias) {
       return aPublico(usuario);
     },
 
-    async recuperar(datos: RecuperarInput): Promise<void> {
-      const usuario = await authRepository.buscarPorCorreo(datos.correo);
-      if (!usuario) return;
-
-      await authRepository.invalidarTokens(usuario.id);
-      const token = randomBytes(32).toString('base64url');
-      await authRepository.crearToken({
-        usuarioId: usuario.id,
-        tokenHash: sha256(token),
-        expiraEn: new Date(Date.now() + env.RESET_TOKEN_MINUTES * 60_000),
-      });
-
-      const enlace = `${env.APP_BASE_URL}/restablecer?token=${token}`;
-      mailer
-        .enviar(correoRecuperacion(usuario.correo, usuario.nombre, enlace, env.RESET_TOKEN_MINUTES))
+    recuperar(datos: RecuperarInput): Promise<void> {
+      const tarea: Promise<void> = procesarRecuperacion(datos)
         .catch((err: unknown) =>
-          logger.error({ err }, 'no se pudo enviar el correo de recuperación'),
-        );
+          logger.error({ err }, 'no se pudo procesar la recuperación de contraseña'),
+        )
+        .finally(() => enCurso.delete(tarea));
+      enCurso.add(tarea);
+      return Promise.resolve();
+    },
+
+    async esperarTareas(): Promise<void> {
+      await Promise.all([...enCurso]);
     },
 
     async restablecer(datos: RestablecerInput): Promise<void> {

@@ -6,7 +6,13 @@ const conCategoria = { categoria: { select: { id: true, nombre: true, icono: tru
 export const productosRepository = {
   async listar(
     usuarioId: number,
-    filtros: { categoriaId: number | undefined; q: string | undefined; skip: number; take: number },
+    filtros: {
+      categoriaId: number | undefined;
+      q: string | undefined;
+      skip: number;
+      take: number;
+      umbral: number;
+    },
   ) {
     const where: Prisma.ProductoWhereInput = {
       usuarioId,
@@ -14,7 +20,7 @@ export const productosRepository = {
       ...(filtros.categoriaId !== undefined ? { categoriaId: filtros.categoriaId } : {}),
       ...(filtros.q ? { nombre: { contains: filtros.q, mode: 'insensitive' } } : {}),
     };
-    const [datos, total] = await Promise.all([
+    const [datos, total, stockBajo] = await Promise.all([
       prisma.producto.findMany({
         where,
         orderBy: { id: 'asc' },
@@ -23,8 +29,9 @@ export const productosRepository = {
         include: conCategoria,
       }),
       prisma.producto.count({ where }),
+      prisma.producto.count({ where: { ...where, stock: { lte: filtros.umbral } } }),
     ]);
-    return { datos, total };
+    return { datos, total, stockBajo };
   },
 
   buscarActivo: (id: number, usuarioId: number) =>

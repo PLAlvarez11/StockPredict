@@ -7,6 +7,15 @@ if (process.env['NODE_ENV'] !== 'test' && existsSync(envPath)) {
   process.loadEnvFile(envPath);
 }
 
+export function esZonaHorariaValida(zona: string): boolean {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: zona });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const entero = (por: number) => z.coerce.number().int().default(por);
 
 const esquema = z.object({
@@ -28,7 +37,13 @@ const esquema = z.object({
     ),
   APP_BASE_URL: z.string().url().default('http://localhost:5173'),
   STOCK_BAJO_UMBRAL: z.coerce.number().int().min(0).default(3),
-  TIMEZONE: z.string().default('America/Guatemala'),
+  TIMEZONE: z
+    .string()
+    .default('America/Guatemala')
+    .refine(esZonaHorariaValida, {
+      error: (issue) =>
+        `"${String(issue.input)}" no es una zona horaria IANA válida (ejemplo: America/Guatemala)`,
+    }),
   RESET_TOKEN_MINUTES: entero(30),
   SMTP_HOST: z.string().default('localhost'),
   SMTP_PORT: entero(1025),

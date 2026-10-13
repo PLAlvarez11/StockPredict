@@ -807,3 +807,141 @@ select.input {
   font-weight: var(--font-heading-weight);
   font-size: 17px;
 }
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.stat {
+  flex: 1;
+  min-width: 0;
+  gap: var(--space-1);
+}
+.stat-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.stat-ok svg {
+  color: var(--color-ok-icon);
+}
+.stat-value {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 28px;
+  line-height: 1.1;
+}
+.stat-sub {
+  font-size: 12.5px;
+  color: var(--color-muted);
+}
+.stat-warn {
+  background: var(--color-warn-bg);
+  box-shadow: 0 0 0 1px var(--color-warn-border);
+}
+.stat-warn .stat-label,
+.stat-warn .stat-value,
+.stat-warn .stat-sub {
+  color: var(--color-warn-text);
+}
+.stat-warn .stat-label svg {
+  color: var(--color-warn-icon);
+}
+.stats-error {
+  flex-basis: 100%;
+}
+.enlace {
+  padding: 0;
+  font: inherit;
+  color: var(--color-accent-text);
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.atajos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+.atajo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--target-size);
+  padding: var(--space-4);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--color-text);
+  text-decoration: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+}
+.atajo svg {
+  flex: none;
+  color: var(--color-accent-text);
+}
+.atajo:hover {
+  background: color-mix(in srgb, var(--color-text) 5%, var(--color-surface));
+}
+
+.por-comprar {
+  gap: var(--space-3);
+  background: var(--color-bg);
+}
+.por-comprar-cabecera {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.por-comprar-total {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 13px;
+}
+.por-comprar-lista {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.por-comprar-lista li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.por-comprar-lista .icon-badge {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-md);
+}
+.por-comprar-nombre {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+}
+.por-comprar-vacio {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 14px;
+  color: var(--color-ok-text);
+}
+.por-comprar-enlace {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  min-height: 32px;
+  font-size: 13.5px;
+  font-weight: 500;
+}

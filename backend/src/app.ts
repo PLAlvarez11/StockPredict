@@ -56,10 +56,9 @@ export function crearApp(opciones: OpcionesApp = {}): Express {
 
   const api = express.Router();
   api.use('/health', healthRouter);
-  api.use(
-    '/auth',
-    crearAuthRouter(crearAuthService({ hasher, mailer }), opciones.limites ?? limitesPorDefecto()),
-  );
+  const authService = crearAuthService({ hasher, mailer });
+  app.locals['esperarTareas'] = authService.esperarTareas;
+  api.use('/auth', crearAuthRouter(authService, opciones.limites ?? limitesPorDefecto()));
   api.use('/categorias', categoriasRouter);
   api.use('/productos', productosRouter);
   api.use('/ventas', ventasRouter);

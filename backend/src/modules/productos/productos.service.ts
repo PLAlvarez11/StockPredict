@@ -46,13 +46,14 @@ const categoriaInvalida = () =>
 
 export const productosService = {
   async listar(usuarioId: number, query: ListarProductosQuery) {
-    const { datos, total } = await repo.listar(usuarioId, {
+    const { datos, total, stockBajo } = await repo.listar(usuarioId, {
       categoriaId: query.categoriaId,
       q: query.q,
       skip: (query.page - 1) * query.limit,
       take: query.limit,
+      umbral: env.STOCK_BAJO_UMBRAL,
     });
-    return { datos: datos.map(aDto), total, page: query.page, limit: query.limit };
+    return { datos: datos.map(aDto), total, stockBajo, page: query.page, limit: query.limit };
   },
 
   async obtener(id: number, usuarioId: number) {

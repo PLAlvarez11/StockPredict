@@ -10,6 +10,7 @@ import { CategoriasPage } from '../features/categorias/CategoriasPage';
 import { InicioPage } from '../features/dashboard/InicioPage';
 import { ProductoFormPage } from '../features/productos/ProductoFormPage';
 import { ProductosPage } from '../features/productos/ProductosPage';
+import { AjustePage } from '../features/inventario/AjustePage';
 import { CompraPage } from '../features/inventario/CompraPage';
 import { InventarioPage } from '../features/inventario/InventarioPage';
 import { VentaPage } from '../features/ventas/VentaPage';
@@ -49,6 +50,7 @@ export const router = createBrowserRouter([
           { path: 'productos/:id/editar', element: <ProductoFormPage /> },
           { path: 'inventario', element: <InventarioPage /> },
           { path: 'inventario/compra', element: <CompraPage /> },
+          { path: 'inventario/ajuste', element: <AjustePage /> },
           { path: 'ventas/nueva', element: <VentaPage /> },
           { path: 'prediccion', element: <PrediccionPage /> },
         ],
