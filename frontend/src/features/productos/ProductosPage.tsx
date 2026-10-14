@@ -3,7 +3,7 @@ import {
   PencilSimple,
   Plus,
   ShoppingBag,
-  Trash,
+  EyeSlash,
 } from '@phosphor-icons/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -170,7 +170,7 @@ export function ProductosPage() {
                   <PencilSimple size={18} aria-hidden="true" />
                 </Link>
                 <Button icono aria-label={`Desactivar ${p.nombre}`} onClick={() => setCandidato(p)}>
-                  <Trash size={18} aria-hidden="true" />
+                  <EyeSlash size={18} aria-hidden="true" />
                 </Button>
               </>
             ) : (

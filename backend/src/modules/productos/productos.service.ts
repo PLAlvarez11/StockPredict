@@ -90,7 +90,10 @@ export const productosService = {
     if (!(await repo.subcategoriaActiva(datos.subcategoriaId, usuarioId))) {
       throw subcategoriaInvalida();
     }
-    if (await repo.buscarPorNombreActivo(usuarioId, datos.nombre)) throw nombreRepetido();
+    const estado = datos.estado ?? true;
+    if (estado && (await repo.buscarPorNombreActivo(usuarioId, datos.nombre))) {
+      throw nombreRepetido();
+    }
     try {
       return aDto(
         await repo.crear({
@@ -99,6 +102,7 @@ export const productosService = {
           subcategoriaId: datos.subcategoriaId,
           descripcion: datos.descripcion ?? null,
           stock: datos.stockInicial,
+          estado,
         }),
       );
     } catch (error) {

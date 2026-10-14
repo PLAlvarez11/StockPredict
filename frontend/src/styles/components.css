@@ -997,3 +997,207 @@ textarea.input {
 .list-row-title {
   overflow-wrap: anywhere;
 }
+
+.switch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: var(--target-size);
+  cursor: pointer;
+}
+.switch input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.switch-pista {
+  position: relative;
+  flex: none;
+  width: 48px;
+  height: 28px;
+  background: var(--color-border-strong);
+  border-radius: 14px;
+  transition: background 0.15s;
+}
+.switch-pista::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  background: var(--color-bg);
+  border-radius: 50%;
+  transition: transform 0.15s;
+}
+.switch input:checked ~ .switch-pista {
+  background: var(--color-accent-text);
+}
+.switch input:checked ~ .switch-pista::after {
+  transform: translateX(20px);
+}
+.switch input:focus-visible ~ .switch-pista {
+  outline: 2px solid var(--color-accent-text);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .switch-pista,
+  .switch-pista::after {
+    transition: none;
+  }
+}
+
+.pasos {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pasos li {
+  flex: 1;
+  height: 4px;
+  background: var(--color-divider);
+  border-radius: 2px;
+}
+.pasos li[data-hecho='true'] {
+  background: var(--color-accent);
+}
+.paso-subtitulo {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--color-muted);
+}
+.opciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.opciones legend {
+  padding: 0;
+  margin-bottom: var(--space-3);
+  font-size: 14px;
+  color: var(--color-muted);
+}
+.opcion {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: var(--target-size);
+  padding: var(--space-3) 14px;
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.opcion input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.opcion:has(input:checked) {
+  background: var(--color-accent-tint);
+  border-color: var(--color-accent-text);
+}
+.opcion:has(input:focus-visible) {
+  outline: 2px solid var(--color-accent-text);
+  outline-offset: 2px;
+}
+.resumen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--color-bg);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+}
+.resumen-cabecera {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.resumen-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-size: 14px;
+  color: var(--color-muted);
+}
+.resumen-descripcion {
+  margin: 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.acciones-paso {
+  display: flex;
+  gap: var(--space-3);
+}
+.acciones-paso .btn {
+  flex: 1;
+}
+
+.acordeon-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4) 14px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+}
+.acordeon-item > .list-row {
+  padding: 0;
+  background: none;
+  border: 0;
+}
+.acordeon-item-inactiva {
+  background: var(--color-surface);
+}
+.acordeon-sub {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0 0 0 var(--space-5);
+  list-style: none;
+}
+.acordeon-sub .list-row {
+  padding: var(--space-3);
+  background: var(--color-surface);
+}
+.acordeon-sub .list-row-inactiva {
+  background: var(--color-divider);
+}
+.acordeon-caret {
+  transition: transform 0.15s;
+}
+.acordeon-caret[data-abierto='true'] {
+  transform: rotate(180deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .acordeon-caret {
+    transition: none;
+  }
+}
+.acordeon-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}

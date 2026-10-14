@@ -219,6 +219,29 @@ describe('productos', () => {
     expect(res.body.nivelStock).toBe('agotado');
   });
 
+  it('P14: crea el producto desactivado cuando estado es false, sin chocar con un activo del mismo nombre', async () => {
+    await nuevo('Blusa floral');
+    const res = await nuevo('Blusa floral', 2, ropa, { estado: false });
+    expect(res.status).toBe(201);
+    expect(res.body.estado).toBe(false);
+    const activos = await agente.get('/api/v1/productos?estado=activos');
+    expect(activos.body.datos).toHaveLength(1);
+    const activar = await agente.post(`/api/v1/productos/${res.body.id}/activar`);
+    expect(activar.status).toBe(409);
+  });
+
+  it('MA-13: editar un producto no acepta estado', async () => {
+    const { body } = await nuevo('Blusa');
+    const res = await agente.patch(`/api/v1/productos/${body.id}`).send({ estado: false });
+    expect(res.status).toBe(422);
+  });
+
+  it('P14: estado true o ausente crea activo, y un estado que no es booleano se rechaza', async () => {
+    expect((await nuevo('A', 1, ropa, { estado: true })).body.estado).toBe(true);
+    expect((await nuevo('B')).body.estado).toBe(true);
+    expect((await nuevo('C', 1, ropa, { estado: 'INACTIVO' })).status).toBe(422);
+  });
+
   it('P09: rechaza nombres repetidos entre productos activos', async () => {
     await nuevo('Blusa');
     const res = await nuevo('blusa', 1, bolsos);

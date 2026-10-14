@@ -26,6 +26,7 @@ export interface ProductoNuevo {
   nombre: string;
   subcategoriaId: number;
   descripcion: string | null;
+  estado: boolean;
   stockInicial: number;
 }
 

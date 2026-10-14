@@ -64,7 +64,7 @@ function Formulario({ categoriaId, iconoCategoria, existente }: FormularioProps)
       await cliente.invalidateQueries({ queryKey: CLAVE_SUBCATEGORIAS });
       await cliente.invalidateQueries({ queryKey: CLAVE_CATEGORIAS });
       await cliente.invalidateQueries({ queryKey: ['productos'] });
-      navegar(`/categorias/${categoriaId}`, { state: { aviso: 'Subcategoría guardada' } });
+      navegar('/categorias', { state: { aviso: 'Subcategoría guardada', abrir: categoriaId } });
     },
     onError: (error) =>
       setErrorGeneral(aplicarErroresServidor(error, setError, ['nombre', 'icono', 'categoriaId'])),
@@ -154,7 +154,7 @@ export function SubcategoriaFormPage() {
 
   return (
     <>
-      <ScreenHeader titulo={titulo} atras={`/categorias/${categoriaId}`} />
+      <ScreenHeader titulo={titulo} atras="/categorias" />
       {contenido}
     </>
   );

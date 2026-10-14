@@ -24,6 +24,7 @@ export const crearProductoSchema = z
     nombre,
     subcategoriaId,
     descripcion: descripcion.nullable().optional(),
+    estado: z.boolean({ error: 'El estado debe ser verdadero o falso.' }).optional(),
     stockInicial: z
       .number({ error: 'Ingresa el stock inicial.' })
       .int('El stock debe ser un número entero.')

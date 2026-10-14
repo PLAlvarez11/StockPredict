@@ -68,6 +68,7 @@ export const productosRepository = {
     subcategoriaId: number;
     descripcion: string | null;
     stock: number;
+    estado: boolean;
   }) => prisma.producto.create({ data: datos, include: conSubcategoria }),
 
   actualizar: (
