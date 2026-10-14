@@ -21,6 +21,7 @@ import { CLAVE_SESION, useSesion } from '../auth/useSesion';
 import { prediccionApi } from '../prediccion/api';
 import { CLAVE_PREDICCION } from '../prediccion/PrediccionPage';
 import { useProductos } from '../productos/hooks';
+import { useTitulo } from '../../lib/useTitulo';
 
 const ATAJOS = [
   { ruta: '/productos/nuevo', etiqueta: 'Crear producto', Icono: PlusCircle },
@@ -111,6 +112,7 @@ function PorComprar() {
 }
 
 export function InicioPage() {
+  useTitulo('Inicio');
   const { data: usuario } = useSesion();
   const cliente = useQueryClient();
   const aviso = ((useLocation().state ?? {}) as { aviso?: string }).aviso;

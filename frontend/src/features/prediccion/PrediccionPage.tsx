@@ -7,10 +7,12 @@ import { ListSkeleton } from '../../components/ui/ListSkeleton';
 import { formatearRangoSemanas } from '../../lib/formato';
 import { prediccionApi } from './api';
 import { PrediccionCard } from './PrediccionCard';
+import { useTitulo } from '../../lib/useTitulo';
 
 export const CLAVE_PREDICCION = ['prediccion'] as const;
 
 export function PrediccionPage() {
+  useTitulo('Predicción de compra');
   const prediccion = useQuery({
     queryKey: CLAVE_PREDICCION,
     queryFn: prediccionApi.obtener,

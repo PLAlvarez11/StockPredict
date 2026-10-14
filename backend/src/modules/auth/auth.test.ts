@@ -234,7 +234,7 @@ describe('AU04 restablecer', () => {
     expect(nuevo.status).toBe(200);
   });
 
-  it('el token es de un solo uso', async () => {
+  it('AU08: el token es de un solo uso', async () => {
     const token = extraerToken();
     await request(app)
       .post('/api/v1/auth/restablecer')
@@ -246,7 +246,7 @@ describe('AU04 restablecer', () => {
     expect(otra.body.code).toBe('TOKEN_INVALID');
   });
 
-  it('un token vencido se rechaza', async () => {
+  it('AU08: un token vencido se rechaza', async () => {
     await prisma.tokenRecuperacion.updateMany({ data: { expiraEn: new Date(Date.now() - 1000) } });
     const res = await request(app)
       .post('/api/v1/auth/restablecer')
@@ -270,7 +270,7 @@ describe('AU04 restablecer', () => {
 });
 
 describe('protecciones', () => {
-  it('limita los intentos fallidos de login con 429 y Retry-After', async () => {
+  it('AU09: limita los intentos fallidos de login con 429 y Retry-After', async () => {
     const limitada = crearApp({ mailer, limites: { ...limites, loginMax: 3 } });
     await request(limitada).post('/api/v1/auth/registro').send(VALIDO);
     const intento = () =>

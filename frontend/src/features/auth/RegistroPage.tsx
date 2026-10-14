@@ -11,8 +11,10 @@ import { aplicarErroresServidor } from '../../lib/formErrors';
 import { authApi } from './api';
 import { registroSchema, type RegistroForm } from './schemas';
 import { CLAVE_SESION } from './useSesion';
+import { useTitulo } from '../../lib/useTitulo';
 
 export function RegistroPage() {
+  useTitulo('Crear cuenta');
   const navegar = useNavigate();
   const cliente = useQueryClient();
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);

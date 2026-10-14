@@ -99,7 +99,7 @@ describe('registrar venta', () => {
     expect(inactivo.body.code).toBe('INACTIVE_RESOURCE');
   });
 
-  it('ventas simultáneas nunca dejan el stock negativo', async () => {
+  it('V07: ventas simultáneas nunca dejan el stock negativo', async () => {
     const resultados = await Promise.all(
       Array.from({ length: 8 }, () => vender({ productoId: producto.id, cantidad: 2 })),
     );

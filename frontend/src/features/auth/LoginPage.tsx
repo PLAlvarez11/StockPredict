@@ -11,6 +11,7 @@ import { aplicarErroresServidor } from '../../lib/formErrors';
 import { authApi } from './api';
 import { loginSchema, type LoginForm } from './schemas';
 import { CLAVE_SESION } from './useSesion';
+import { useTitulo } from '../../lib/useTitulo';
 
 interface EstadoLogin {
   aviso?: string;
@@ -18,6 +19,7 @@ interface EstadoLogin {
 }
 
 export function LoginPage() {
+  useTitulo('Iniciar sesión');
   const navegar = useNavigate();
   const cliente = useQueryClient();
   const estado = (useLocation().state ?? {}) as EstadoLogin;

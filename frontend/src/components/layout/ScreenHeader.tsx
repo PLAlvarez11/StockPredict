@@ -1,6 +1,7 @@
 import { CaretLeft } from '@phosphor-icons/react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { useTitulo } from '../../lib/useTitulo';
 
 interface Props {
   titulo: string;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function ScreenHeader({ titulo, atras, accion }: Props) {
+  useTitulo(titulo);
   return (
     <header className="screen-header">
       {atras && (

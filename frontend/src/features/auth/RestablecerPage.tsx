@@ -12,8 +12,10 @@ import { ApiError } from '../../lib/apiClient';
 import { aplicarErroresServidor } from '../../lib/formErrors';
 import { authApi } from './api';
 import { restablecerSchema, type RestablecerForm } from './schemas';
+import { useTitulo } from '../../lib/useTitulo';
 
 export function RestablecerPage() {
+  useTitulo('Restablecer contraseña');
   const [params] = useSearchParams();
   const token = params.get('token') ?? '';
   const navegar = useNavigate();

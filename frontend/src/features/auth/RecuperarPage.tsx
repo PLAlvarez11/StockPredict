@@ -10,8 +10,10 @@ import { Notice } from '../../components/ui/Notice';
 import { aplicarErroresServidor } from '../../lib/formErrors';
 import { authApi } from './api';
 import { recuperarSchema, type RecuperarForm } from './schemas';
+import { useTitulo } from '../../lib/useTitulo';
 
 export function RecuperarPage() {
+  useTitulo('Recuperar contraseña');
   const [enviado, setEnviado] = useState(false);
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
 

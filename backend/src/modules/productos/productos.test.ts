@@ -141,7 +141,7 @@ describe('productos', () => {
     expect(res.body.nivelStock).toBe('agotado');
   });
 
-  it('rechaza nombres repetidos entre productos activos', async () => {
+  it('P09: rechaza nombres repetidos entre productos activos', async () => {
     await crear({ nombre: 'Blusa', categoriaId: ropa.id, stockInicial: 1 });
     const res = await crear({ nombre: 'blusa', categoriaId: bolsos.id, stockInicial: 1 });
     expect(res.status).toBe(409);

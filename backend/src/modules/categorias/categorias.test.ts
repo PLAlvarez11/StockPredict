@@ -82,7 +82,7 @@ describe('categorías', () => {
     expect(nueva.status).toBe(201);
   });
 
-  it('no inactiva una categoría con productos activos (D6) y sí cuando ya no los tiene (D7)', async () => {
+  it('C08: no inactiva una categoría con productos activos (D6) y sí cuando ya no los tiene (D7)', async () => {
     const cat = (await crear({ nombre: 'Ropa', icono: 't-shirt' })).body;
     const prod = (
       await agente

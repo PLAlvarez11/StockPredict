@@ -107,7 +107,7 @@ describe('ajustar stock manual', () => {
     expect((await ajustar({ productoId: 'abc', cantidad: 3 })).status).toBe(422);
   });
 
-  it('un producto de otro usuario responde 404 y no cambia', async () => {
+  it('A05: un producto de otro usuario responde 404 y no cambia', async () => {
     const otra = await iniciarSesionDePrueba(app, 'otra@ejemplo.com');
     const res = await otra
       .post('/api/v1/inventario/ajustes')

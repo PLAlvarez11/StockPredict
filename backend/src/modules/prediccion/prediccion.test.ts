@@ -66,7 +66,7 @@ describe('predicción con el seed de la demo', () => {
     expect(item.calculo).toBeNull();
   });
 
-  it('producto con V2 = 0 usa factor 1', async () => {
+  it('PR06: producto con V2 = 0 usa factor 1', async () => {
     const { item } = await buscar('Collar dorado charm');
     expect(item.calculo).toMatchObject({
       v1: 5,
@@ -92,14 +92,14 @@ describe('predicción con el seed de la demo', () => {
     expect(resultado.totalAComprar).toBe(cantidades.length);
   });
 
-  it('las ventas de la semana en curso no entran al cálculo', async () => {
+  it('PR07: las ventas de la semana en curso no entran al cálculo', async () => {
     const antes = (await buscar('Blusa floral')).item.stockSugerido;
     const blusa = await prisma.producto.findFirstOrThrow({ where: { nombre: 'Blusa floral' } });
     await prisma.venta.create({ data: { productoId: blusa.id, cantidad: 500, fecha: AHORA } });
     expect((await buscar('Blusa floral')).item.stockSugerido).toBe(antes);
   });
 
-  it('los productos inactivos se excluyen y no cuentan como base de la categoría', async () => {
+  it('PR07: los productos inactivos se excluyen y no cuentan como base de la categoría', async () => {
     const vestido = await prisma.producto.findFirstOrThrow({
       where: { nombre: 'Vestido casual midi' },
     });
