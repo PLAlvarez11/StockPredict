@@ -10,8 +10,11 @@ const producto = {
   id: 1,
   nombre: 'Blusa floral',
   stock: 3,
+  descripcion: null,
+  estado: true,
   nivelStock: 'bajo',
   categoria: { id: 1, nombre: 'Ropa', icono: 't-shirt' },
+  subcategoria: { id: 1, nombre: 'Blusas', icono: 't-shirt' },
 };
 
 const listado = { datos: [producto], total: 1, stockBajo: 1, page: 1, limit: 100 };

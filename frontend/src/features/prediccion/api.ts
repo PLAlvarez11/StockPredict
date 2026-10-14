@@ -21,6 +21,7 @@ export interface ItemPrediccion {
     id: number;
     nombre: string;
     categoria: { id: number; nombre: string; icono: string };
+    subcategoria: { id: number; nombre: string; icono: string };
   };
   stockActual: number;
   estado: EstadoPrediccion;

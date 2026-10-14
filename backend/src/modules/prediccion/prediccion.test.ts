@@ -111,8 +111,36 @@ describe('predicción con el seed de la demo', () => {
     expect(item.calculo).toMatchObject({ v1: 8, v2: 6, v3: 5 });
   });
 
+  it('PR07: el producto desactivado (Chaleco, con muchas ventas) no aparece ni entra al promedio de su categoría; si se activa, sí cambia el resultado', async () => {
+    const sin = await buscar('Blusa de lino');
+    expect(sin.resultado.items.some((i) => i.producto.nombre.startsWith('Chaleco'))).toBe(false);
+    expect(sin.item.calculo?.productosBase).toBe(2);
+
+    const chaleco = await prisma.producto.findFirstOrThrow({
+      where: { nombre: { startsWith: 'Chaleco' } },
+    });
+    expect(chaleco.estado).toBe(false);
+    await prisma.producto.update({ where: { id: chaleco.id }, data: { estado: true } });
+    const con = await buscar('Blusa de lino');
+    expect(con.item.calculo?.productosBase).toBe(3);
+    expect(con.item.stockSugerido).not.toBe(sin.item.stockSugerido);
+    expect(con.resultado.totalActivos).toBe(15);
+  });
+
+  it('PR02: el respaldo promedia la categoría completa aunque los productos estén en subcategorías distintas', async () => {
+    const { item } = await buscar('Blusa de lino');
+    expect(item.producto.subcategoria.nombre).toBe('Blusas');
+    expect(item.producto.categoria.nombre).toBe('Ropa');
+    expect(item.origen).toBe('categoria');
+    expect(item.calculo).toMatchObject({ productosBase: 2, v1: 7, v2: 5.5, v3: 4.5 });
+    const vestido = (await buscar('Vestido casual midi')).item;
+    expect(vestido.producto.subcategoria).toMatchObject({ nombre: 'Vestidos', icono: 'dress' });
+  });
+
   it('si la categoría no tiene ninguna venta en las 3 semanas, no hay historial', async () => {
-    await prisma.venta.deleteMany({ where: { producto: { categoria: { nombre: 'Ropa' } } } });
+    await prisma.venta.deleteMany({
+      where: { producto: { subcategoria: { categoria: { nombre: 'Ropa' } } } },
+    });
     const { item } = await buscar('Blusa de lino');
     expect(item.estado).toBe('sin_historial');
   });
@@ -135,6 +163,26 @@ describe('GET /api/v1/prediccion', () => {
   it('exige sesión', async () => {
     const res = await request(crearApp({ mailer: crearMailerFalso() })).get('/api/v1/prediccion');
     expect(res.status).toBe(401);
+  });
+
+  it('un producto desactivado no entra al conteo de stock bajo, al resumen ni a la predicción', async () => {
+    await sembrarDemo();
+    const agente = request.agent(crearApp({ mailer: crearMailerFalso() }));
+    await agente
+      .post('/api/v1/auth/login')
+      .send({ correo: CORREO_DEMO, contrasena: CONTRASENA_DEMO });
+    const productos = await agente.get('/api/v1/productos');
+    expect(productos.body.total).toBe(14);
+    expect(productos.body.stockBajo).toBe(5);
+    const inactivos = await agente.get('/api/v1/productos?estado=inactivos');
+    expect(inactivos.body.datos.map((p: { nombre: string }) => p.nombre)).toEqual([
+      'Chaleco de lana (descontinuado)',
+    ]);
+    const prediccion = await agente.get('/api/v1/prediccion');
+    expect(prediccion.body.totalActivos).toBe(14);
+    const categorias = await agente.get('/api/v1/categorias');
+    const ropa = categorias.body.find((c: { nombre: string }) => c.nombre === 'Ropa');
+    expect(ropa).toMatchObject({ totalSubcategorias: 4, totalProductos: 3 });
   });
 
   it('devuelve la predicción y refleja una venta nueva en el stock actual', async () => {

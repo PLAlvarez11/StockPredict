@@ -2,7 +2,12 @@ import request from 'supertest';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { crearApp } from '../../app.js';
 import { prisma } from '../../shared/db/prisma.js';
-import { crearMailerFalso, iniciarSesionDePrueba, limpiarBase } from '../../../test/helpers.js';
+import {
+  crearCatalogoDePrueba,
+  crearMailerFalso,
+  iniciarSesionDePrueba,
+  limpiarBase,
+} from '../../../test/helpers.js';
 
 const app = crearApp({ mailer: crearMailerFalso() });
 let agente: Awaited<ReturnType<typeof iniciarSesionDePrueba>>;
@@ -11,13 +16,11 @@ let producto: { id: number };
 beforeEach(async () => {
   await limpiarBase();
   agente = await iniciarSesionDePrueba(app);
-  const categoria = (
-    await agente.post('/api/v1/categorias').send({ nombre: 'Ropa', icono: 't-shirt' })
-  ).body;
+  const { subcategoria } = await crearCatalogoDePrueba(agente);
   producto = (
     await agente
       .post('/api/v1/productos')
-      .send({ nombre: 'Blusa', categoriaId: categoria.id, stockInicial: 5 })
+      .send({ nombre: 'Blusa', subcategoriaId: subcategoria.id, stockInicial: 5 })
   ).body;
 });
 

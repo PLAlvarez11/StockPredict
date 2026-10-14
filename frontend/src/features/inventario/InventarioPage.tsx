@@ -39,7 +39,7 @@ export function InventarioPage() {
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 10 }}>
           {productos.data.datos.map((p) => (
             <li key={p.id} className="list-row">
-              <IconBadge icono={p.categoria.icono} />
+              <IconBadge icono={p.subcategoria.icono} />
               <span className="list-row-main list-row-title">{p.nombre}</span>
               <StockTag stock={p.stock} nivel={p.nivelStock} />
             </li>

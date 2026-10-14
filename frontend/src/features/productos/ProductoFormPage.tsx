@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
 import { ScreenHeader } from '../../components/layout/ScreenHeader';
@@ -12,12 +12,16 @@ import { Field } from '../../components/ui/Field';
 import { ListSkeleton } from '../../components/ui/ListSkeleton';
 import { Notice } from '../../components/ui/Notice';
 import { SelectField } from '../../components/ui/SelectField';
+import { TextAreaField } from '../../components/ui/TextAreaField';
 import { ApiError } from '../../lib/apiClient';
 import { aplicarErroresServidor } from '../../lib/formErrors';
 import type { Categoria } from '../categorias/api';
 import { CLAVE_CATEGORIAS, useCategorias } from '../categorias/hooks';
+import { CLAVE_SUBCATEGORIAS, useSubcategorias } from '../subcategorias/hooks';
 import { productosApi, type Producto } from './api';
 import { CLAVE_PRODUCTOS, useProducto } from './hooks';
+
+const MAXIMO_DESCRIPCION = 500;
 
 const esquema = z.object({
   nombre: z
@@ -26,6 +30,10 @@ const esquema = z.object({
     .min(1, 'Ingresa el nombre del producto.')
     .max(150, 'El nombre es demasiado largo.'),
   categoriaId: z.string().min(1, 'Elige una categoría.'),
+  subcategoriaId: z.string().min(1, 'Elige una subcategoría.'),
+  descripcion: z
+    .string()
+    .max(MAXIMO_DESCRIPCION, `La descripción no puede pasar de ${MAXIMO_DESCRIPCION} caracteres.`),
   stockInicial: z
     .number({ error: 'Ingresa el stock inicial.' })
     .int('El stock debe ser un número entero.')
@@ -49,41 +57,62 @@ function Formulario({ existente, categorias }: FormularioProps) {
     register,
     handleSubmit,
     setError,
+    setValue,
+    control,
     formState: { errors },
   } = useForm<Valores>({
     resolver: zodResolver(esquema),
     defaultValues: {
       nombre: existente?.nombre ?? '',
       categoriaId: existente ? String(existente.categoria.id) : '',
+      subcategoriaId: existente ? String(existente.subcategoria.id) : '',
+      descripcion: existente?.descripcion ?? '',
       stockInicial: existente?.stock ?? 0,
     },
   });
 
+  const categoriaElegida = useWatch({ control, name: 'categoriaId' });
+  const descripcion = useWatch({ control, name: 'descripcion' });
+  const categoriaNumero = categoriaElegida === '' ? undefined : Number(categoriaElegida);
+  const subcategorias = useSubcategorias(categoriaNumero);
+  const opciones = categoriaNumero === undefined ? [] : (subcategorias.data ?? []);
+
   const guardar = useMutation({
     mutationFn: (datos: Valores) => {
-      const categoriaId = Number(datos.categoriaId);
+      const subcategoriaId = Number(datos.subcategoriaId);
+      const texto = datos.descripcion.trim();
       return existente
-        ? productosApi.editar(existente.id, { nombre: datos.nombre, categoriaId })
+        ? productosApi.editar(existente.id, {
+            nombre: datos.nombre,
+            subcategoriaId,
+            descripcion: texto === '' ? null : texto,
+          })
         : productosApi.crear({
             nombre: datos.nombre,
-            categoriaId,
+            subcategoriaId,
+            descripcion: texto === '' ? null : texto,
             stockInicial: datos.stockInicial,
           });
     },
     onSuccess: async () => {
       await cliente.invalidateQueries({ queryKey: CLAVE_PRODUCTOS });
       await cliente.invalidateQueries({ queryKey: CLAVE_CATEGORIAS });
+      await cliente.invalidateQueries({ queryKey: CLAVE_SUBCATEGORIAS });
       navegar('/productos', { state: { aviso: 'Producto guardado' } });
     },
     onError: (error) => {
       const mensaje = aplicarErroresServidor(error, setError, [
         'nombre',
-        'categoriaId',
+        'subcategoriaId',
+        'descripcion',
         'stockInicial',
       ]);
       setErrorGeneral(mensaje);
     },
   });
+
+  const sinSubcategorias =
+    categoriaNumero !== undefined && subcategorias.isSuccess && opciones.length === 0;
 
   return (
     <form
@@ -106,7 +135,7 @@ function Formulario({ existente, categorias }: FormularioProps) {
       <SelectField
         etiqueta="Categoría"
         error={errors.categoriaId?.message}
-        {...register('categoriaId')}
+        {...register('categoriaId', { onChange: () => setValue('subcategoriaId', '') })}
       >
         <option value="">Elige una categoría</option>
         {categorias.map((c) => (
@@ -115,6 +144,36 @@ function Formulario({ existente, categorias }: FormularioProps) {
           </option>
         ))}
       </SelectField>
+      <SelectField
+        etiqueta="Subcategoría"
+        disabled={categoriaNumero === undefined}
+        error={errors.subcategoriaId?.message}
+        {...register('subcategoriaId')}
+      >
+        <option value="">
+          {categoriaNumero === undefined ? 'Primero elige una categoría' : 'Elige una subcategoría'}
+        </option>
+        {opciones.map((s) => (
+          <option key={s.id} value={s.id}>
+            {s.nombre}
+          </option>
+        ))}
+      </SelectField>
+      {sinSubcategorias && (
+        <Notice tipo="error">
+          Esta categoría no tiene subcategorías activas.{' '}
+          <Link to={`/categorias/${categoriaNumero}/subcategorias/nueva`}>Crear una</Link>
+        </Notice>
+      )}
+      <TextAreaField
+        etiqueta="Descripción (opcional)"
+        placeholder="ej. Blusa de algodón, manga corta, tallas S a L"
+        maxLength={MAXIMO_DESCRIPCION}
+        maximo={MAXIMO_DESCRIPCION}
+        caracteres={descripcion.length}
+        error={errors.descripcion?.message}
+        {...register('descripcion')}
+      />
       {existente ? (
         <Field
           etiqueta="Stock actual"
@@ -169,12 +228,25 @@ export function ProductoFormPage() {
     ) : (
       <ErrorState onReintentar={() => void producto.refetch()} />
     );
+  } else if (numero !== null && producto.data && !producto.data.estado) {
+    contenido = (
+      <EmptyState
+        icono={<span aria-hidden="true">!</span>}
+        titulo="El producto está inactivo"
+        texto="Actívalo desde la lista de productos inactivos para poder editarlo."
+        accion={
+          <Link to="/productos" className="btn btn-primary">
+            Volver a productos
+          </Link>
+        }
+      />
+    );
   } else if (categorias.data.length === 0) {
     contenido = (
       <EmptyState
         icono={<span aria-hidden="true">+</span>}
         titulo="Primero crea una categoría"
-        texto="Cada producto pertenece a una categoría."
+        texto="Cada producto pertenece a una subcategoría dentro de una categoría."
         accion={
           <Link to="/categorias/nueva" className="btn btn-primary">
             Crear categoría

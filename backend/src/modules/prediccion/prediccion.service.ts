@@ -16,6 +16,7 @@ export interface ItemPrediccion {
     id: number;
     nombre: string;
     categoria: { id: number; nombre: string; icono: string };
+    subcategoria: { id: number; nombre: string; icono: string };
   };
   stockActual: number;
   estado: EstadoPrediccion;
@@ -50,7 +51,15 @@ export async function calcularPrediccion(
   const [w1, , w3] = semanas;
   if (!w1 || !w3) throw new Error('No se pudieron calcular las semanas');
 
-  const productos = await repo.productosActivos(usuarioId);
+  const productos = (await repo.productosActivos(usuarioId)).map((p) => ({
+    ...p,
+    categoria: p.subcategoria.categoria,
+    subcategoriaDto: {
+      id: p.subcategoria.id,
+      nombre: p.subcategoria.nombre,
+      icono: p.subcategoria.icono ?? p.subcategoria.categoria.icono,
+    },
+  }));
   const ventas =
     productos.length === 0
       ? []
@@ -72,7 +81,12 @@ export async function calcularPrediccion(
 
   const items: ItemPrediccion[] = productos.map((p) => {
     const base = {
-      producto: { id: p.id, nombre: p.nombre, categoria: p.categoria },
+      producto: {
+        id: p.id,
+        nombre: p.nombre,
+        categoria: p.categoria,
+        subcategoria: p.subcategoriaDto,
+      },
       stockActual: p.stock,
     };
     let semanasVentas: VentasPorSemana | null = null;

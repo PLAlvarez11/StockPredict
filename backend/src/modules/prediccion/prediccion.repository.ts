@@ -5,7 +5,16 @@ export const prediccionRepository = {
     prisma.producto.findMany({
       where: { usuarioId, estado: true },
       orderBy: { id: 'asc' },
-      include: { categoria: { select: { id: true, nombre: true, icono: true } } },
+      include: {
+        subcategoria: {
+          select: {
+            id: true,
+            nombre: true,
+            icono: true,
+            categoria: { select: { id: true, nombre: true, icono: true } },
+          },
+        },
+      },
     }),
 
   ventasEntre: (productoIds: number[], desde: Date, hasta: Date) =>

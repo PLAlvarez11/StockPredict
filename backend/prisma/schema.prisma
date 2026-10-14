@@ -21,9 +21,10 @@ model Usuario {
   contrasenaHash String   @map("contrasena_hash") @db.VarChar(255)
   fechaCreacion  DateTime @default(now()) @map("fecha_creacion") @db.Timestamptz(6)
 
-  categorias Categoria[]
-  productos  Producto[]
-  tokens     TokenRecuperacion[]
+  categorias    Categoria[]
+  subcategorias Subcategoria[]
+  productos     Producto[]
+  tokens        TokenRecuperacion[]
 
   @@map("usuario")
 }
@@ -36,29 +37,48 @@ model Categoria {
   estado    Boolean  @default(true)
   creadoEn  DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
 
-  usuario   Usuario    @relation(fields: [usuarioId], references: [id])
-  productos Producto[]
+  usuario       Usuario        @relation(fields: [usuarioId], references: [id])
+  subcategorias Subcategoria[]
 
   @@index([usuarioId, estado], map: "idx_categoria_usuario_estado")
   @@map("categoria")
 }
 
-model Producto {
+model Subcategoria {
   id          Int      @id @default(autoincrement())
-  nombre      String   @db.VarChar(150)
-  categoriaId Int      @map("categoria_id")
   usuarioId   Int      @map("usuario_id")
-  stock       Int      @default(0)
+  categoriaId Int      @map("categoria_id")
+  nombre      String   @db.VarChar(100)
+  icono       String?  @db.VarChar(50)
   estado      Boolean  @default(true)
   creadoEn    DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
 
-  categoria   Categoria              @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
-  usuario     Usuario                @relation(fields: [usuarioId], references: [id])
-  ventas      Venta[]
-  movimientos MovimientoInventario[]
+  usuario   Usuario    @relation(fields: [usuarioId], references: [id])
+  categoria Categoria  @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
+  productos Producto[]
+
+  @@index([usuarioId, estado], map: "idx_subcategoria_usuario_estado")
+  @@index([categoriaId], map: "idx_subcategoria_categoria")
+  @@map("subcategoria")
+}
+
+model Producto {
+  id             Int      @id @default(autoincrement())
+  nombre         String   @db.VarChar(150)
+  subcategoriaId Int      @map("subcategoria_id")
+  descripcion    String?  @db.VarChar(500)
+  usuarioId      Int      @map("usuario_id")
+  stock          Int      @default(0)
+  estado         Boolean  @default(true)
+  creadoEn       DateTime @default(now()) @map("creado_en") @db.Timestamptz(6)
+
+  subcategoria Subcategoria           @relation(fields: [subcategoriaId], references: [id], onDelete: Restrict)
+  usuario      Usuario                @relation(fields: [usuarioId], references: [id])
+  ventas       Venta[]
+  movimientos  MovimientoInventario[]
 
   @@index([usuarioId, estado], map: "idx_producto_usuario_estado")
-  @@index([categoriaId], map: "idx_producto_categoria")
+  @@index([subcategoriaId], map: "idx_producto_subcategoria")
   @@map("producto")
 }
 

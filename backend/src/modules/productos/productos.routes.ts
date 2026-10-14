@@ -43,3 +43,7 @@ productosRouter.delete('/:id', validar({ params: idParams }), async (req, res) =
   await servicio.inactivar(idDe(req), usuario(req));
   res.status(204).end();
 });
+
+productosRouter.post('/:id/activar', validar({ params: idParams }), async (req, res) => {
+  res.json(await servicio.activar(idDe(req), usuario(req)));
+});

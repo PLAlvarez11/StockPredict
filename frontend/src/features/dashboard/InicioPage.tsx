@@ -96,7 +96,7 @@ function PorComprar() {
         <ul className="por-comprar-lista">
           {urgentes.map((i) => (
             <li key={i.producto.id}>
-              <IconBadge icono={i.producto.categoria.icono} tamano={16} />
+              <IconBadge icono={i.producto.subcategoria.icono} tamano={16} />
               <span className="por-comprar-nombre">{i.producto.nombre}</span>
               <span className="tag tag-danger">{i.cantidadAComprar} u.</span>
             </li>

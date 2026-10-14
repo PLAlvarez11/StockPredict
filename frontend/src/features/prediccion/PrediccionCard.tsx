@@ -87,10 +87,12 @@ export function PrediccionCard({ item }: { item: ItemPrediccion }) {
   return (
     <article className="card elev-md pred-card">
       <div className="pred-head">
-        <IconBadge icono={producto.categoria.icono} />
+        <IconBadge icono={producto.subcategoria.icono} />
         <div className="list-row-main">
           <h2 className="list-row-title">{producto.nombre}</h2>
-          <div className="list-row-sub">{producto.categoria.nombre}</div>
+          <div className="list-row-sub">
+            {producto.categoria.nombre} · {producto.subcategoria.nombre}
+          </div>
         </div>
       </div>
 

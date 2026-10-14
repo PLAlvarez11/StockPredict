@@ -7,6 +7,8 @@ import { RegistroPage } from '../features/auth/RegistroPage';
 import { RestablecerPage } from '../features/auth/RestablecerPage';
 import { CategoriaFormPage } from '../features/categorias/CategoriaFormPage';
 import { CategoriasPage } from '../features/categorias/CategoriasPage';
+import { SubcategoriaFormPage } from '../features/subcategorias/SubcategoriaFormPage';
+import { SubcategoriasPage } from '../features/subcategorias/SubcategoriasPage';
 import { InicioPage } from '../features/dashboard/InicioPage';
 import { ProductoFormPage } from '../features/productos/ProductoFormPage';
 import { ProductosPage } from '../features/productos/ProductosPage';
@@ -45,6 +47,9 @@ export const router = createBrowserRouter([
           { path: 'categorias', element: <CategoriasPage /> },
           { path: 'categorias/nueva', element: <CategoriaFormPage /> },
           { path: 'categorias/:id/editar', element: <CategoriaFormPage /> },
+          { path: 'categorias/:id', element: <SubcategoriasPage /> },
+          { path: 'categorias/:id/subcategorias/nueva', element: <SubcategoriaFormPage /> },
+          { path: 'categorias/:id/subcategorias/:subId/editar', element: <SubcategoriaFormPage /> },
           { path: 'productos', element: <ProductosPage /> },
           { path: 'productos/nuevo', element: <ProductoFormPage /> },
           { path: 'productos/:id/editar', element: <ProductoFormPage /> },

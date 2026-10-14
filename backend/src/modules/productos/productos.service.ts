@@ -12,34 +12,56 @@ import type {
 interface FilaProducto {
   id: number;
   nombre: string;
+  descripcion: string | null;
   stock: number;
-  categoria: { id: number; nombre: string; icono: string };
+  estado: boolean;
+  subcategoria: {
+    id: number;
+    nombre: string;
+    icono: string | null;
+    categoria: { id: number; nombre: string; icono: string };
+  };
 }
 
 const aDto = (p: FilaProducto) => ({
   id: p.id,
   nombre: p.nombre,
+  descripcion: p.descripcion,
   stock: p.stock,
+  estado: p.estado,
   nivelStock: nivelStock(p.stock, env.STOCK_BAJO_UMBRAL),
-  categoria: p.categoria,
+  categoria: {
+    id: p.subcategoria.categoria.id,
+    nombre: p.subcategoria.categoria.nombre,
+    icono: p.subcategoria.categoria.icono,
+  },
+  subcategoria: {
+    id: p.subcategoria.id,
+    nombre: p.subcategoria.nombre,
+    icono: p.subcategoria.icono ?? p.subcategoria.categoria.icono,
+  },
 });
 
 const nombreRepetido = () =>
   new AppError(409, 'DUPLICATE_NAME', 'Nombre repetido', {
-    detail: 'Ya tienes un producto con ese nombre.',
+    detail: 'Ya tienes un producto activo con ese nombre.',
     errors: [
-      { field: 'nombre', code: 'DUPLICATE_NAME', message: 'Ya tienes un producto con ese nombre.' },
+      {
+        field: 'nombre',
+        code: 'DUPLICATE_NAME',
+        message: 'Ya tienes un producto activo con ese nombre.',
+      },
     ],
   });
 
-const categoriaInvalida = () =>
+const subcategoriaInvalida = () =>
   new AppError(422, 'VALIDATION_ERROR', 'Datos inválidos', {
     detail: 'Revisa los campos marcados.',
     errors: [
       {
-        field: 'categoriaId',
-        code: 'INVALID_CATEGORY',
-        message: 'La categoría no existe o está inactiva.',
+        field: 'subcategoriaId',
+        code: 'INVALID_SUBCATEGORY',
+        message: 'La subcategoría no existe o está inactiva.',
       },
     ],
   });
@@ -48,6 +70,8 @@ export const productosService = {
   async listar(usuarioId: number, query: ListarProductosQuery) {
     const { datos, total, stockBajo } = await repo.listar(usuarioId, {
       categoriaId: query.categoriaId,
+      subcategoriaId: query.subcategoriaId,
+      estado: query.estado,
       q: query.q,
       skip: (query.page - 1) * query.limit,
       take: query.limit,
@@ -57,20 +81,23 @@ export const productosService = {
   },
 
   async obtener(id: number, usuarioId: number) {
-    const producto = await repo.buscarActivo(id, usuarioId);
+    const producto = await repo.buscar(id, usuarioId);
     if (!producto) throw noEncontrado('El producto no existe.');
     return aDto(producto);
   },
 
   async crear(usuarioId: number, datos: CrearProductoInput) {
-    if (!(await repo.categoriaActiva(datos.categoriaId, usuarioId))) throw categoriaInvalida();
+    if (!(await repo.subcategoriaActiva(datos.subcategoriaId, usuarioId))) {
+      throw subcategoriaInvalida();
+    }
     if (await repo.buscarPorNombreActivo(usuarioId, datos.nombre)) throw nombreRepetido();
     try {
       return aDto(
         await repo.crear({
           usuarioId,
           nombre: datos.nombre,
-          categoriaId: datos.categoriaId,
+          subcategoriaId: datos.subcategoriaId,
+          descripcion: datos.descripcion ?? null,
           stock: datos.stockInicial,
         }),
       );
@@ -81,13 +108,13 @@ export const productosService = {
   },
 
   async editar(id: number, usuarioId: number, datos: EditarProductoInput) {
-    const actual = await repo.buscarActivo(id, usuarioId);
-    if (!actual) throw noEncontrado('El producto no existe.');
+    const actual = await repo.buscar(id, usuarioId);
+    if (!actual || !actual.estado) throw noEncontrado('El producto no existe.');
     if (
-      datos.categoriaId !== undefined &&
-      !(await repo.categoriaActiva(datos.categoriaId, usuarioId))
+      datos.subcategoriaId !== undefined &&
+      !(await repo.subcategoriaActiva(datos.subcategoriaId, usuarioId))
     ) {
-      throw categoriaInvalida();
+      throw subcategoriaInvalida();
     }
     if (datos.nombre !== undefined && datos.nombre.toLowerCase() !== actual.nombre.toLowerCase()) {
       if (await repo.buscarPorNombreActivo(usuarioId, datos.nombre)) throw nombreRepetido();
@@ -101,8 +128,30 @@ export const productosService = {
   },
 
   async inactivar(id: number, usuarioId: number) {
-    const producto = await repo.buscarActivo(id, usuarioId);
+    const producto = await repo.buscar(id, usuarioId);
+    if (!producto || !producto.estado) throw noEncontrado('El producto no existe.');
+    await repo.cambiarEstado(id, false);
+  },
+
+  async activar(id: number, usuarioId: number) {
+    const producto = await repo.buscar(id, usuarioId);
     if (!producto) throw noEncontrado('El producto no existe.');
-    await repo.inactivar(id);
+    if (producto.estado) return aDto(producto);
+
+    if (!producto.subcategoria.estado || !producto.subcategoria.categoria.estado) {
+      throw new AppError(422, 'INACTIVE_RESOURCE', 'Subcategoría inactiva', {
+        detail: `La subcategoría «${producto.subcategoria.nombre}» o su categoría está inactiva. Actívala primero.`,
+      });
+    }
+    if (await repo.buscarPorNombreActivo(usuarioId, producto.nombre)) throw nombreRepetido();
+    try {
+      await repo.cambiarEstado(id, true);
+    } catch (error) {
+      if (esViolacionUnica(error)) throw nombreRepetido();
+      throw error;
+    }
+    const activado = await repo.buscar(id, usuarioId);
+    if (!activado) throw noEncontrado('El producto no existe.');
+    return aDto(activado);
   },
 };

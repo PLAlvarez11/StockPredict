@@ -16,6 +16,7 @@ import { categoriasRouter } from './modules/categorias/categorias.routes.js';
 import { inventarioRouter } from './modules/inventario/inventario.routes.js';
 import { prediccionRouter } from './modules/prediccion/prediccion.routes.js';
 import { productosRouter } from './modules/productos/productos.routes.js';
+import { subcategoriasRouter } from './modules/subcategorias/subcategorias.routes.js';
 import { ventasRouter } from './modules/ventas/ventas.routes.js';
 import { bcryptHasher, type PasswordHasher } from './modules/auth/password-hasher.js';
 import { healthRouter } from './modules/health/health.routes.js';
@@ -60,6 +61,7 @@ export function crearApp(opciones: OpcionesApp = {}): Express {
   app.locals['esperarTareas'] = authService.esperarTareas;
   api.use('/auth', crearAuthRouter(authService, opciones.limites ?? limitesPorDefecto()));
   api.use('/categorias', categoriasRouter);
+  api.use('/subcategorias', subcategoriasRouter);
   api.use('/productos', productosRouter);
   api.use('/ventas', ventasRouter);
   api.use('/inventario', inventarioRouter);

@@ -1,6 +1,8 @@
 import { Router } from 'express';
-import { requiereSesion } from '../../shared/http/requiere-sesion.js';
+import { z } from 'zod';
+import { filtroActivos, type FiltroActivos } from '../../shared/http/estado.js';
 import { idParams } from '../../shared/http/esquemas.js';
+import { requiereSesion } from '../../shared/http/requiere-sesion.js';
 import { validar } from '../../shared/http/validate.js';
 import { ICONOS_CATEGORIA } from '../../shared/iconos.js';
 import {
@@ -17,13 +19,15 @@ categoriasRouter.use(requiereSesion);
 
 const usuario = (req: { usuarioId?: number }) => req.usuarioId as number;
 const idDe = (req: { params: unknown }) => (req.params as { id: number }).id;
+const listarQuery = z.object({ estado: filtroActivos }).strict();
 
 categoriasRouter.get('/iconos', (_req, res) => {
   res.json(ICONOS_CATEGORIA);
 });
 
-categoriasRouter.get('/', async (req, res) => {
-  res.json(await servicio.listar(usuario(req)));
+categoriasRouter.get('/', validar({ query: listarQuery }), async (req, res) => {
+  const { estado } = req.query as unknown as { estado: FiltroActivos };
+  res.json(await servicio.listar(usuario(req), estado));
 });
 
 categoriasRouter.post('/', validar({ body: crearCategoriaSchema }), async (req, res) => {
@@ -46,4 +50,8 @@ categoriasRouter.patch(
 categoriasRouter.delete('/:id', validar({ params: idParams }), async (req, res) => {
   await servicio.inactivar(idDe(req), usuario(req));
   res.status(204).end();
+});
+
+categoriasRouter.post('/:id/activar', validar({ params: idParams }), async (req, res) => {
+  res.json(await servicio.activar(idDe(req), usuario(req)));
 });

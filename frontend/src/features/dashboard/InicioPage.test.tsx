@@ -87,7 +87,7 @@ describe('InicioPage', () => {
         totalAComprar: 1,
         items: [
           {
-            producto: { id: 1, nombre: 'Blusa floral', categoria },
+            producto: { id: 1, nombre: 'Blusa floral', categoria, subcategoria: categoria },
             stockActual: 3,
             estado: 'comprar',
             origen: 'producto',
@@ -96,7 +96,7 @@ describe('InicioPage', () => {
             calculo: null,
           },
           {
-            producto: { id: 2, nombre: 'Vestido', categoria },
+            producto: { id: 2, nombre: 'Vestido', categoria, subcategoria: categoria },
             stockActual: 15,
             estado: 'suficiente',
             origen: 'producto',

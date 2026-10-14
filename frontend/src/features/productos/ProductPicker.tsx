@@ -19,7 +19,7 @@ export function ProductPicker({ registro, productos, seleccionado, error }: Prop
     <div className="field">
       <label htmlFor={id}>Producto</label>
       <div className="picker">
-        <IconBadge icono={seleccionado?.categoria.icono ?? 'tag'} />
+        <IconBadge icono={seleccionado?.subcategoria.icono ?? 'tag'} />
         <div className="select-wrap" style={{ flex: 1 }}>
           <select
             id={id}

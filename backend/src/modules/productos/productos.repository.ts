@@ -1,65 +1,93 @@
 import type { Prisma } from '../../generated/prisma/client.js';
 import { prisma } from '../../shared/db/prisma.js';
+import { condicionEstado, type FiltroActivos } from '../../shared/http/estado.js';
 
-const conCategoria = { categoria: { select: { id: true, nombre: true, icono: true } } } as const;
+export const conSubcategoria = {
+  subcategoria: {
+    select: {
+      id: true,
+      nombre: true,
+      icono: true,
+      estado: true,
+      categoria: { select: { id: true, nombre: true, icono: true, estado: true } },
+    },
+  },
+} as const;
+
+export interface FiltrosListado {
+  categoriaId: number | undefined;
+  subcategoriaId: number | undefined;
+  estado: FiltroActivos;
+  q: string | undefined;
+  skip: number;
+  take: number;
+  umbral: number;
+}
 
 export const productosRepository = {
-  async listar(
-    usuarioId: number,
-    filtros: {
-      categoriaId: number | undefined;
-      q: string | undefined;
-      skip: number;
-      take: number;
-      umbral: number;
-    },
-  ) {
-    const where: Prisma.ProductoWhereInput = {
+  async listar(usuarioId: number, filtros: FiltrosListado) {
+    const base: Prisma.ProductoWhereInput = {
       usuarioId,
-      estado: true,
-      ...(filtros.categoriaId !== undefined ? { categoriaId: filtros.categoriaId } : {}),
+      ...(filtros.subcategoriaId !== undefined ? { subcategoriaId: filtros.subcategoriaId } : {}),
+      ...(filtros.categoriaId !== undefined
+        ? { subcategoria: { categoriaId: filtros.categoriaId } }
+        : {}),
       ...(filtros.q ? { nombre: { contains: filtros.q, mode: 'insensitive' } } : {}),
     };
+    const where: Prisma.ProductoWhereInput = { ...base, ...condicionEstado(filtros.estado) };
     const [datos, total, stockBajo] = await Promise.all([
       prisma.producto.findMany({
         where,
         orderBy: { id: 'asc' },
         skip: filtros.skip,
         take: filtros.take,
-        include: conCategoria,
+        include: conSubcategoria,
       }),
       prisma.producto.count({ where }),
-      prisma.producto.count({ where: { ...where, stock: { lte: filtros.umbral } } }),
+      prisma.producto.count({ where: { ...base, estado: true, stock: { lte: filtros.umbral } } }),
     ]);
     return { datos, total, stockBajo };
   },
 
-  buscarActivo: (id: number, usuarioId: number) =>
-    prisma.producto.findFirst({ where: { id, usuarioId, estado: true }, include: conCategoria }),
+  buscar: (id: number, usuarioId: number) =>
+    prisma.producto.findFirst({ where: { id, usuarioId }, include: conSubcategoria }),
 
   buscarPorNombreActivo: (usuarioId: number, nombre: string) =>
     prisma.producto.findFirst({
       where: { usuarioId, estado: true, nombre: { equals: nombre, mode: 'insensitive' } },
     }),
 
-  categoriaActiva: (id: number, usuarioId: number) =>
-    prisma.categoria.findFirst({ where: { id, usuarioId, estado: true } }),
+  subcategoriaActiva: (id: number, usuarioId: number) =>
+    prisma.subcategoria.findFirst({
+      where: { id, usuarioId, estado: true, categoria: { estado: true } },
+    }),
 
-  crear: (datos: { usuarioId: number; nombre: string; categoriaId: number; stock: number }) =>
-    prisma.producto.create({ data: datos, include: conCategoria }),
+  crear: (datos: {
+    usuarioId: number;
+    nombre: string;
+    subcategoriaId: number;
+    descripcion: string | null;
+    stock: number;
+  }) => prisma.producto.create({ data: datos, include: conSubcategoria }),
 
   actualizar: (
     id: number,
-    datos: { nombre?: string | undefined; categoriaId?: number | undefined },
+    datos: {
+      nombre?: string | undefined;
+      subcategoriaId?: number | undefined;
+      descripcion?: string | null | undefined;
+    },
   ) =>
     prisma.producto.update({
       where: { id },
       data: {
         ...(datos.nombre !== undefined ? { nombre: datos.nombre } : {}),
-        ...(datos.categoriaId !== undefined ? { categoriaId: datos.categoriaId } : {}),
+        ...(datos.subcategoriaId !== undefined ? { subcategoriaId: datos.subcategoriaId } : {}),
+        ...(datos.descripcion !== undefined ? { descripcion: datos.descripcion } : {}),
       },
-      include: conCategoria,
+      include: conSubcategoria,
     }),
 
-  inactivar: (id: number) => prisma.producto.update({ where: { id }, data: { estado: false } }),
+  cambiarEstado: (id: number, estado: boolean) =>
+    prisma.producto.update({ where: { id }, data: { estado } }),
 };

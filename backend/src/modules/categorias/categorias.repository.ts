@@ -1,17 +1,27 @@
 import { prisma } from '../../shared/db/prisma.js';
+import { condicionEstado, type FiltroActivos } from '../../shared/http/estado.js';
 
 export const categoriasRepository = {
-  listarActivas: (usuarioId: number) =>
+  listar: (usuarioId: number, filtro: FiltroActivos) =>
     prisma.categoria.findMany({
-      where: { usuarioId, estado: true },
+      where: { usuarioId, ...condicionEstado(filtro) },
       orderBy: { id: 'asc' },
-      include: { _count: { select: { productos: { where: { estado: true } } } } },
+      include: { subcategorias: { select: { id: true, estado: true } } },
     }),
 
-  buscarActiva: (id: number, usuarioId: number) =>
+  productosActivosPorSubcategoria: async (usuarioId: number) => {
+    const filas = await prisma.producto.groupBy({
+      by: ['subcategoriaId'],
+      where: { usuarioId, estado: true },
+      _count: { _all: true },
+    });
+    return new Map(filas.map((f) => [f.subcategoriaId, f._count._all]));
+  },
+
+  buscar: (id: number, usuarioId: number) =>
     prisma.categoria.findFirst({
-      where: { id, usuarioId, estado: true },
-      include: { _count: { select: { productos: { where: { estado: true } } } } },
+      where: { id, usuarioId },
+      include: { subcategorias: { select: { id: true, estado: true } } },
     }),
 
   buscarPorNombreActiva: (usuarioId: number, nombre: string) =>
@@ -31,8 +41,9 @@ export const categoriasRepository = {
       },
     }),
 
-  contarProductosActivos: (categoriaId: number) =>
-    prisma.producto.count({ where: { categoriaId, estado: true } }),
+  contarSubcategoriasActivas: (categoriaId: number) =>
+    prisma.subcategoria.count({ where: { categoriaId, estado: true } }),
 
-  inactivar: (id: number) => prisma.categoria.update({ where: { id }, data: { estado: false } }),
+  cambiarEstado: (id: number, estado: boolean) =>
+    prisma.categoria.update({ where: { id }, data: { estado } }),
 };

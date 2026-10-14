@@ -23,9 +23,16 @@ export function simularApi(respuestas: Respuestas): LlamadaSimulada[] {
         }),
       );
     }
+    const conEstado = typeof cuerpo === 'object' && cuerpo !== null && '__estado' in cuerpo;
+    const estado = conEstado
+      ? Number((cuerpo as { __estado: number }).__estado)
+      : metodo === 'POST'
+        ? 201
+        : 200;
+    const datos = conEstado ? (cuerpo as unknown as { cuerpo: unknown }).cuerpo : cuerpo;
     return Promise.resolve(
-      new Response(JSON.stringify(cuerpo), {
-        status: metodo === 'POST' ? 201 : 200,
+      new Response(estado === 204 ? null : JSON.stringify(datos), {
+        status: estado,
         headers: { 'Content-Type': 'application/json' },
       }),
     );

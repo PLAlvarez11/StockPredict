@@ -2,7 +2,12 @@ import request from 'supertest';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { crearApp } from '../../app.js';
 import { prisma } from '../../shared/db/prisma.js';
-import { crearMailerFalso, iniciarSesionDePrueba, limpiarBase } from '../../../test/helpers.js';
+import {
+  crearCatalogoDePrueba,
+  crearMailerFalso,
+  iniciarSesionDePrueba,
+  limpiarBase,
+} from '../../../test/helpers.js';
 
 const app = crearApp({ mailer: crearMailerFalso() });
 let agente: Awaited<ReturnType<typeof iniciarSesionDePrueba>>;
@@ -22,7 +27,13 @@ describe('categorías', () => {
   it('C01: crea una categoría con nombre válido e ícono de la lista', async () => {
     const res = await crear({ nombre: ' Ropa ', icono: 't-shirt' });
     expect(res.status).toBe(201);
-    expect(res.body).toMatchObject({ nombre: 'Ropa', icono: 't-shirt', totalProductos: 0 });
+    expect(res.body).toMatchObject({
+      nombre: 'Ropa',
+      icono: 't-shirt',
+      estado: true,
+      totalSubcategorias: 0,
+      totalProductos: 0,
+    });
   });
 
   it('C02 y C03: edita nombre e ícono', async () => {
@@ -44,18 +55,25 @@ describe('categorías', () => {
     expect(fila.estado).toBe(false);
   });
 
-  it('C05: lista solo las categorías activas con su conteo de productos activos', async () => {
-    const ropa = (await crear({ nombre: 'Ropa', icono: 't-shirt' })).body;
-    await crear({ nombre: 'Bolsos', icono: 'handbag-simple' });
+  it('C05: lista solo las categorías activas con su conteo de subcategorías y productos activos', async () => {
+    const { categoria: ropa, subcategoria } = await crearCatalogoDePrueba(agente, 'Ropa', 'Blusas');
+    await agente.post('/api/v1/subcategorias').send({ categoriaId: ropa.id, nombre: 'Pantalones' });
     await agente
       .post('/api/v1/productos')
-      .send({ nombre: 'Blusa', categoriaId: ropa.id, stockInicial: 4 });
+      .send({ nombre: 'Blusa', subcategoriaId: subcategoria.id, stockInicial: 4 });
+    const inactivoSub = (
+      await agente
+        .post('/api/v1/productos')
+        .send({ nombre: 'Viejo', subcategoriaId: subcategoria.id, stockInicial: 1 })
+    ).body;
+    await agente.delete(`/api/v1/productos/${inactivoSub.id}`);
+    await crear({ nombre: 'Bolsos', icono: 'handbag-simple' });
     const inactiva = (await crear({ nombre: 'Vieja', icono: 'tag' })).body;
     await agente.delete(`/api/v1/categorias/${inactiva.id}`);
     const res = await agente.get('/api/v1/categorias');
     expect(res.body.map((c: { nombre: string }) => c.nombre)).toEqual(['Ropa', 'Bolsos']);
-    expect(res.body[0].totalProductos).toBe(1);
-    expect(res.body[1].totalProductos).toBe(0);
+    expect(res.body[0]).toMatchObject({ totalSubcategorias: 2, totalProductos: 1 });
+    expect(res.body[1]).toMatchObject({ totalSubcategorias: 0, totalProductos: 0 });
   });
 
   it('C06: rechaza una categoría sin nombre', async () => {
@@ -82,19 +100,42 @@ describe('categorías', () => {
     expect(nueva.status).toBe(201);
   });
 
-  it('C08: no inactiva una categoría con productos activos (D6) y sí cuando ya no los tiene (D7)', async () => {
-    const cat = (await crear({ nombre: 'Ropa', icono: 't-shirt' })).body;
+  it('C08: no inactiva una categoría con subcategorías activas y sí cuando ya no las tiene (D6, D7)', async () => {
+    const { categoria, subcategoria } = await crearCatalogoDePrueba(agente);
     const prod = (
       await agente
         .post('/api/v1/productos')
-        .send({ nombre: 'Blusa', categoriaId: cat.id, stockInicial: 1 })
+        .send({ nombre: 'Blusa', subcategoriaId: subcategoria.id, stockInicial: 1 })
     ).body;
-    const bloqueada = await agente.delete(`/api/v1/categorias/${cat.id}`);
+    const bloqueada = await agente.delete(`/api/v1/categorias/${categoria.id}`);
     expect(bloqueada.status).toBe(409);
-    expect(bloqueada.body.code).toBe('CATEGORY_HAS_ACTIVE_PRODUCTS');
+    expect(bloqueada.body.code).toBe('CATEGORY_HAS_ACTIVE_SUBCATEGORIES');
+    expect(bloqueada.body.detail).toContain('1 subcategoría activa');
+    expect((await agente.delete(`/api/v1/subcategorias/${subcategoria.id}`)).status).toBe(409);
     await agente.delete(`/api/v1/productos/${prod.id}`);
-    const ok = await agente.delete(`/api/v1/categorias/${cat.id}`);
+    expect((await agente.delete(`/api/v1/subcategorias/${subcategoria.id}`)).status).toBe(204);
+    const ok = await agente.delete(`/api/v1/categorias/${categoria.id}`);
     expect(ok.status).toBe(204);
+  });
+
+  it('C09: lista las inactivas con el filtro estado y permite activarlas de nuevo', async () => {
+    const { body } = await crear({ nombre: 'Ropa', icono: 't-shirt' });
+    await agente.delete(`/api/v1/categorias/${body.id}`);
+    const inactivas = await agente.get('/api/v1/categorias?estado=inactivos');
+    expect(inactivas.body.map((c: { nombre: string }) => c.nombre)).toEqual(['Ropa']);
+    expect(inactivas.body[0].estado).toBe(false);
+    const activa = await agente.post(`/api/v1/categorias/${body.id}/activar`);
+    expect(activa.status).toBe(200);
+    expect(activa.body.estado).toBe(true);
+    expect((await agente.get('/api/v1/categorias')).body).toHaveLength(1);
+  });
+
+  it('C10: no activa una categoría si otra activa ya usa su nombre', async () => {
+    const { body } = await crear({ nombre: 'Ropa', icono: 't-shirt' });
+    await agente.delete(`/api/v1/categorias/${body.id}`);
+    await crear({ nombre: 'Ropa', icono: 'dress' });
+    const res = await agente.post(`/api/v1/categorias/${body.id}/activar`);
+    expect(res.status).toBe(409);
   });
 
   it('expone la lista fija de 15 íconos', async () => {
@@ -118,6 +159,7 @@ describe('categorías', () => {
       404,
     );
     expect((await otra.delete(`/api/v1/categorias/${mia.id}`)).status).toBe(404);
+    expect((await otra.post(`/api/v1/categorias/${mia.id}/activar`)).status).toBe(404);
     const propia = await otra.post('/api/v1/categorias').send({ nombre: 'Ropa', icono: 't-shirt' });
     expect(propia.status).toBe(201);
   });
