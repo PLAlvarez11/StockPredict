@@ -21,6 +21,7 @@ import { authApi } from '../auth/api';
 import { CLAVE_SESION, useSesion } from '../auth/useSesion';
 import { prediccionApi } from '../prediccion/api';
 import { CLAVE_PREDICCION } from '../prediccion/PrediccionPage';
+import { EnlaceProducto } from '../productos/EnlaceProducto';
 import { useProductos } from '../productos/hooks';
 import { useTitulo } from '../../lib/useTitulo';
 
@@ -99,7 +100,9 @@ function PorComprar() {
           {urgentes.map((i) => (
             <li key={i.producto.id}>
               <IconBadge icono={i.producto.subcategoria.icono} tamano={16} />
-              <span className="por-comprar-nombre">{i.producto.nombre}</span>
+              <span className="por-comprar-nombre">
+                <EnlaceProducto id={i.producto.id} nombre={i.producto.nombre} />
+              </span>
               <span className="tag tag-danger">{i.cantidadAComprar} u.</span>
             </li>
           ))}

@@ -76,3 +76,20 @@ export function semanasCerradas(referencia: Date, zona: string, cantidad = 3): S
   }
   return resultado;
 }
+
+export function ultimasSemanas(referencia: Date, zona: string, cantidad: number): Semana[] {
+  const resultado: Semana[] = [semanaDe(referencia, zona)];
+  let cursor = resultado[0]?.inicio ?? inicioSemana(referencia, zona);
+  for (let i = 1; i < cantidad; i += 1) {
+    const anterior = inicioSemana(new Date(cursor.getTime() - 12 * 3_600_000), zona);
+    resultado.unshift({ inicio: anterior, fin: cursor });
+    cursor = anterior;
+  }
+  return resultado;
+}
+
+export function diaLocal(instante: Date, zona: string): string {
+  const p = partes(instante, zona);
+  const dos = (n: number) => String(n).padStart(2, '0');
+  return `${p.anio}-${dos(p.mes)}-${dos(p.dia)}`;
+}

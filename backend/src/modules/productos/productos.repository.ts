@@ -52,6 +52,17 @@ export const productosRepository = {
   buscar: (id: number, usuarioId: number) =>
     prisma.producto.findFirst({ where: { id, usuarioId }, include: conSubcategoria }),
 
+  comprasEntre: (productoId: number, usuarioId: number, desde: Date, hasta: Date) =>
+    prisma.movimientoInventario.findMany({
+      where: {
+        productoId,
+        tipo: 'compra',
+        fecha: { gte: desde, lt: hasta },
+        producto: { usuarioId },
+      },
+      select: { cantidad: true, fecha: true },
+    }),
+
   buscarPorNombreActivo: (usuarioId: number, nombre: string) =>
     prisma.producto.findFirst({
       where: { usuarioId, estado: true, nombre: { equals: nombre, mode: 'insensitive' } },

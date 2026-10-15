@@ -3,6 +3,7 @@ import { idParams } from '../../shared/http/esquemas.js';
 import { requiereSesion } from '../../shared/http/requiere-sesion.js';
 import { validar } from '../../shared/http/validate.js';
 import {
+  comprasQuery,
   crearProductoSchema,
   editarProductoSchema,
   listarProductosQuery,
@@ -30,6 +31,14 @@ productosRouter.post('/', validar({ body: crearProductoSchema }), async (req, re
 productosRouter.get('/:id', validar({ params: idParams }), async (req, res) => {
   res.json(await servicio.obtener(idDe(req), usuario(req)));
 });
+
+productosRouter.get(
+  '/:id/compras',
+  validar({ params: idParams, query: comprasQuery }),
+  async (req, res) => {
+    res.json(await servicio.compras(idDe(req), usuario(req)));
+  },
+);
 
 productosRouter.patch(
   '/:id',

@@ -56,6 +56,8 @@ export const listarProductosQuery = z
   })
   .strict();
 
+export const comprasQuery = z.object({}).strict();
+
 export type CrearProductoInput = z.infer<typeof crearProductoSchema>;
 export type EditarProductoInput = z.infer<typeof editarProductoSchema>;
 export type ListarProductosQuery = z.infer<typeof listarProductosQuery>;

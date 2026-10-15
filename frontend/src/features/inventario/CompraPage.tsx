@@ -3,7 +3,7 @@ import { ShoppingBag } from '@phosphor-icons/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { ScreenHeader } from '../../components/layout/ScreenHeader';
 import { Button } from '../../components/ui/Button';
@@ -34,6 +34,7 @@ function Formulario({ productos }: { productos: Producto[] }) {
   const navegar = useNavigate();
   const cliente = useQueryClient();
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
+  const preseleccion = useSearchParams()[0].get('productoId') ?? '';
 
   const {
     register,
@@ -43,7 +44,10 @@ function Formulario({ productos }: { productos: Producto[] }) {
     formState: { errors },
   } = useForm<Valores>({
     resolver: zodResolver(esquema),
-    defaultValues: { productoId: '', cantidad: 1 },
+    defaultValues: {
+      productoId: productos.some((p) => String(p.id) === preseleccion) ? preseleccion : '',
+      cantidad: 1,
+    },
   });
 
   const productoWatch = useWatch({ control, name: 'productoId' });

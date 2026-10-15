@@ -9,6 +9,7 @@ import { CategoriaFormPage } from '../features/categorias/CategoriaFormPage';
 import { CategoriasPage } from '../features/categorias/CategoriasPage';
 import { SubcategoriaFormPage } from '../features/subcategorias/SubcategoriaFormPage';
 import { InicioPage } from '../features/dashboard/InicioPage';
+import { lazy, Suspense } from 'react';
 import { ProductoFormPage } from '../features/productos/ProductoFormPage';
 import { ProductosPage } from '../features/productos/ProductosPage';
 import { AjustePage } from '../features/inventario/AjustePage';
@@ -17,7 +18,14 @@ import { InventarioPage } from '../features/inventario/InventarioPage';
 import { VentaPage } from '../features/ventas/VentaPage';
 import { PrediccionPage } from '../features/prediccion/PrediccionPage';
 import { SimuladorPage } from '../features/prediccion/SimuladorPage';
+import { ListSkeleton } from '../components/ui/ListSkeleton';
 import { RutaPrivada, RutaPublica } from './guards';
+
+const ProductoDetallePage = lazy(() =>
+  import('../features/productos/ProductoDetallePage').then((m) => ({
+    default: m.ProductoDetallePage,
+  })),
+);
 
 export const router = createBrowserRouter([
   {
@@ -52,6 +60,14 @@ export const router = createBrowserRouter([
           { path: 'productos', element: <ProductosPage /> },
           { path: 'productos/nuevo', element: <ProductoFormPage /> },
           { path: 'productos/:id/editar', element: <ProductoFormPage /> },
+          {
+            path: 'productos/:id',
+            element: (
+              <Suspense fallback={<ListSkeleton filas={4} />}>
+                <ProductoDetallePage />
+              </Suspense>
+            ),
+          },
           { path: 'inventario', element: <InventarioPage /> },
           { path: 'inventario/compra', element: <CompraPage /> },
           { path: 'inventario/ajuste', element: <AjustePage /> },

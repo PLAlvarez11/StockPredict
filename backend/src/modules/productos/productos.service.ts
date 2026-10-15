@@ -2,6 +2,7 @@ import { env } from '../../config/env.js';
 import { esViolacionUnica } from '../../shared/db/errores.js';
 import { AppError, noEncontrado } from '../../shared/errors/app-error.js';
 import { nivelStock } from '../../shared/stock.js';
+import { diaLocal, ultimasSemanas } from '../../shared/time/semana.js';
 import { productosRepository as repo } from './productos.repository.js';
 import type {
   CrearProductoInput,
@@ -41,6 +42,8 @@ const aDto = (p: FilaProducto) => ({
     icono: p.subcategoria.icono ?? p.subcategoria.categoria.icono,
   },
 });
+
+const SEMANAS_DE_COMPRAS = 12;
 
 const nombreRepetido = () =>
   new AppError(409, 'DUPLICATE_NAME', 'Nombre repetido', {
@@ -113,14 +116,18 @@ export const productosService = {
 
   async editar(id: number, usuarioId: number, datos: EditarProductoInput) {
     const actual = await repo.buscar(id, usuarioId);
-    if (!actual || !actual.estado) throw noEncontrado('El producto no existe.');
+    if (!actual) throw noEncontrado('El producto no existe.');
     if (
       datos.subcategoriaId !== undefined &&
       !(await repo.subcategoriaActiva(datos.subcategoriaId, usuarioId))
     ) {
       throw subcategoriaInvalida();
     }
-    if (datos.nombre !== undefined && datos.nombre.toLowerCase() !== actual.nombre.toLowerCase()) {
+    if (
+      actual.estado &&
+      datos.nombre !== undefined &&
+      datos.nombre.toLowerCase() !== actual.nombre.toLowerCase()
+    ) {
       if (await repo.buscarPorNombreActivo(usuarioId, datos.nombre)) throw nombreRepetido();
     }
     try {
@@ -129,6 +136,39 @@ export const productosService = {
       if (esViolacionUnica(error)) throw nombreRepetido();
       throw error;
     }
+  },
+
+  async compras(
+    id: number,
+    usuarioId: number,
+    ahora: Date = new Date(),
+    zona: string = env.TIMEZONE,
+  ) {
+    const producto = await repo.buscar(id, usuarioId);
+    if (!producto) throw noEncontrado('El producto no existe.');
+    const semanas = ultimasSemanas(ahora, zona, SEMANAS_DE_COMPRAS);
+    const primera = semanas[0];
+    const ultima = semanas[semanas.length - 1];
+    if (!primera || !ultima) throw new Error('No se pudieron calcular las semanas');
+    const movimientos = await repo.comprasEntre(id, usuarioId, primera.inicio, ultima.fin);
+    const cantidades = semanas.map(() => 0);
+    for (const m of movimientos) {
+      const t = m.fecha.getTime();
+      const i = semanas.findIndex((s) => t >= s.inicio.getTime() && t < s.fin.getTime());
+      if (i >= 0) cantidades[i] = (cantidades[i] ?? 0) + m.cantidad;
+    }
+    const detalle = semanas.map((s, i) => ({
+      inicio: diaLocal(s.inicio, zona),
+      fin: diaLocal(new Date(s.fin.getTime() - 1), zona),
+      cantidad: cantidades[i] ?? 0,
+      enCurso: i === semanas.length - 1,
+    }));
+    const total = detalle.reduce((suma, s) => suma + s.cantidad, 0);
+    let mayor: (typeof detalle)[number] | null = null;
+    for (const s of detalle) {
+      if (s.cantidad > 0 && (mayor === null || s.cantidad > mayor.cantidad)) mayor = s;
+    }
+    return { semanas: detalle, total, semanaMayor: mayor };
   },
 
   async inactivar(id: number, usuarioId: number) {

@@ -6,6 +6,7 @@ import { ErrorState } from '../../components/ui/ErrorState';
 import { IconBadge } from '../../components/ui/IconBadge';
 import { ListSkeleton } from '../../components/ui/ListSkeleton';
 import { Notice } from '../../components/ui/Notice';
+import { EnlaceProducto } from '../productos/EnlaceProducto';
 import { useProductos } from '../productos/hooks';
 import { StockTag } from '../productos/StockTag';
 
@@ -40,7 +41,9 @@ export function InventarioPage() {
           {productos.data.datos.map((p) => (
             <li key={p.id} className="list-row">
               <IconBadge icono={p.subcategoria.icono} />
-              <span className="list-row-main list-row-title">{p.nombre}</span>
+              <span className="list-row-main list-row-title">
+                <EnlaceProducto id={p.id} nombre={p.nombre} />
+              </span>
               <StockTag stock={p.stock} nivel={p.nivelStock} />
             </li>
           ))}

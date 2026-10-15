@@ -5,22 +5,20 @@ import {
   ShoppingBag,
   EyeSlash,
 } from '@phosphor-icons/react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ScreenHeader } from '../../components/layout/ScreenHeader';
 import { Button } from '../../components/ui/Button';
-import { Dialog } from '../../components/ui/Dialog';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { IconBadge } from '../../components/ui/IconBadge';
 import { ListSkeleton } from '../../components/ui/ListSkeleton';
 import { Notice } from '../../components/ui/Notice';
-import { ApiError } from '../../lib/apiClient';
-import { CLAVE_CATEGORIAS, useCategorias } from '../categorias/hooks';
-import { CLAVE_SUBCATEGORIAS, useSubcategorias } from '../subcategorias/hooks';
-import { productosApi, type Producto } from './api';
-import { CLAVE_PRODUCTOS, useProductos } from './hooks';
+import { useCategorias } from '../categorias/hooks';
+import { useSubcategorias } from '../subcategorias/hooks';
+import { EnlaceProducto } from './EnlaceProducto';
+import { useProductos } from './hooks';
+import { useCambioEstado } from './useCambioEstado';
 import { StockTag } from './StockTag';
 
 export function ProductosPage() {
@@ -34,51 +32,9 @@ export function ProductosPage() {
     subcategoriaId: filtroSub,
     estado: inactivos ? 'inactivos' : 'activos',
   });
-  const cliente = useQueryClient();
   const estado = (useLocation().state ?? {}) as { aviso?: string };
   const [aviso, setAviso] = useState<string | undefined>(estado.aviso);
-  const [candidato, setCandidato] = useState<Producto | null>(null);
-  const [aActivar, setAActivar] = useState<Producto | null>(null);
-  const [fallo, setFallo] = useState<{ titulo: string; texto: string } | null>(null);
-
-  const refrescar = async () => {
-    await cliente.invalidateQueries({ queryKey: CLAVE_PRODUCTOS });
-    await cliente.invalidateQueries({ queryKey: CLAVE_CATEGORIAS });
-    await cliente.invalidateQueries({ queryKey: CLAVE_SUBCATEGORIAS });
-    await cliente.invalidateQueries({ queryKey: ['prediccion'] });
-  };
-
-  const inactivar = useMutation({
-    mutationFn: (id: number) => productosApi.inactivar(id),
-    onSuccess: async () => {
-      await refrescar();
-      setCandidato(null);
-      setAviso('Producto desactivado');
-    },
-    onError: (error) => {
-      setCandidato(null);
-      setFallo({
-        titulo: 'No se pudo desactivar',
-        texto: error instanceof ApiError ? error.message : 'No se pudo desactivar el producto.',
-      });
-    },
-  });
-
-  const activar = useMutation({
-    mutationFn: (id: number) => productosApi.activar(id),
-    onSuccess: async () => {
-      await refrescar();
-      setAActivar(null);
-      setAviso('Producto activado');
-    },
-    onError: (error) => {
-      setAActivar(null);
-      setFallo({
-        titulo: 'No se pudo activar',
-        texto: error instanceof ApiError ? error.message : 'No se pudo activar el producto.',
-      });
-    },
-  });
+  const { pedirDesactivar, pedirActivar, dialogos } = useCambioEstado(setAviso);
 
   const elegirCategoria = (id: number | undefined) => {
     setFiltro(id);
@@ -154,7 +110,9 @@ export function ProductosPage() {
           <li key={p.id} className={p.estado ? 'list-row' : 'list-row list-row-inactiva'}>
             <IconBadge icono={p.subcategoria.icono} />
             <div className="list-row-main">
-              <div className="list-row-title">{p.nombre}</div>
+              <div className="list-row-title">
+                <EnlaceProducto id={p.id} nombre={p.nombre} />
+              </div>
               <div className="list-row-sub">
                 {p.categoria.nombre} · {p.subcategoria.nombre}
               </div>
@@ -169,14 +127,18 @@ export function ProductosPage() {
                 >
                   <PencilSimple size={18} aria-hidden="true" />
                 </Link>
-                <Button icono aria-label={`Desactivar ${p.nombre}`} onClick={() => setCandidato(p)}>
+                <Button
+                  icono
+                  aria-label={`Desactivar ${p.nombre}`}
+                  onClick={() => pedirDesactivar(p)}
+                >
                   <EyeSlash size={18} aria-hidden="true" />
                 </Button>
               </>
             ) : (
               <>
                 <span className="tag tag-inactivo">Inactivo</span>
-                <Button aria-label={`Activar ${p.nombre}`} onClick={() => setAActivar(p)}>
+                <Button aria-label={`Activar ${p.nombre}`} onClick={() => pedirActivar(p)}>
                   <ArrowCounterClockwise size={16} aria-hidden="true" />
                   Activar
                 </Button>
@@ -256,60 +218,7 @@ export function ProductosPage() {
       )}
       {contenido}
 
-      <Dialog
-        abierto={candidato !== null}
-        titulo={`¿Desactivar «${candidato?.nombre ?? ''}»?`}
-        onCerrar={() => setCandidato(null)}
-        acciones={
-          <>
-            <Button onClick={() => setCandidato(null)}>Cancelar</Button>
-            <Button
-              variante="danger"
-              disabled={inactivar.isPending}
-              onClick={() => candidato && inactivar.mutate(candidato.id)}
-            >
-              Desactivar
-            </Button>
-          </>
-        }
-      >
-        Dejará de aparecer en las listas, en las ventas, en el conteo de stock bajo y en la
-        predicción. Podrás activarlo de nuevo.
-      </Dialog>
-
-      <Dialog
-        abierto={aActivar !== null}
-        titulo={`¿Activar «${aActivar?.nombre ?? ''}»?`}
-        onCerrar={() => setAActivar(null)}
-        acciones={
-          <>
-            <Button onClick={() => setAActivar(null)}>Cancelar</Button>
-            <Button
-              variante="primary"
-              disabled={activar.isPending}
-              onClick={() => aActivar && activar.mutate(aActivar.id)}
-            >
-              Activar
-            </Button>
-          </>
-        }
-      >
-        Volverá a aparecer en las listas, en las ventas y en la predicción, con su stock actual de{' '}
-        {aActivar?.stock} u.
-      </Dialog>
-
-      <Dialog
-        abierto={fallo !== null}
-        titulo={fallo?.titulo ?? ''}
-        onCerrar={() => setFallo(null)}
-        acciones={
-          <Button variante="primary" onClick={() => setFallo(null)}>
-            Entendido
-          </Button>
-        }
-      >
-        {fallo?.texto}
-      </Dialog>
+      {dialogos}
     </>
   );
 }

@@ -1301,3 +1301,108 @@ textarea.input {
   flex-direction: column;
   gap: var(--space-3);
 }
+
+.enlace-producto {
+  color: var(--color-accent-text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.enlace-producto:hover {
+  text-decoration-thickness: 2px;
+}
+.detalle-cabecera {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+}
+.detalle-imagen {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 84px;
+  height: 84px;
+  color: var(--color-muted);
+  background: var(--color-surface);
+  border: 1.5px dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+}
+.detalle-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: 13px;
+  color: var(--color-muted);
+}
+.detalle-datos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5) var(--space-4);
+  margin: 0;
+}
+.detalle-dato-ancho {
+  grid-column: 1 / -1;
+}
+.detalle-dato dt {
+  margin-bottom: var(--space-1);
+  font-size: 13px;
+  color: var(--color-muted);
+}
+.detalle-dato dd {
+  margin: 0;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+.detalle-stock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.grafica {
+  gap: var(--space-3);
+  background: var(--color-bg);
+}
+.grafica-titulo {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.grafica svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.grafica-linea {
+  fill: none;
+  stroke: var(--color-accent-text);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.grafica-punto {
+  fill: var(--color-bg);
+  stroke: var(--color-accent-text);
+  stroke-width: 2;
+}
+.grafica-eje {
+  stroke: var(--color-border-strong);
+  stroke-width: 1;
+}
+.grafica-guia {
+  stroke: var(--color-divider);
+  stroke-width: 1;
+}
+.grafica-texto {
+  font-size: 10.5px;
+  fill: var(--color-muted);
+}
+.grafica-resumen {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-muted);
+}

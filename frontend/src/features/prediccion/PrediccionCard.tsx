@@ -1,6 +1,7 @@
 import { CaretDown, CheckCircle, Info, ShoppingCartSimple } from '@phosphor-icons/react';
 import { useId, useState } from 'react';
 import { IconBadge } from '../../components/ui/IconBadge';
+import { EnlaceProducto } from '../productos/EnlaceProducto';
 import type { ItemPrediccion, Semaforo } from './api';
 import { CalculoLista } from './CalculoLista';
 
@@ -22,7 +23,9 @@ export function PrediccionCard({ item }: { item: ItemPrediccion }) {
       <div className="pred-head">
         <IconBadge icono={producto.subcategoria.icono} />
         <div className="list-row-main">
-          <h2 className="list-row-title">{producto.nombre}</h2>
+          <h2 className="list-row-title">
+            <EnlaceProducto id={producto.id} nombre={producto.nombre} />
+          </h2>
           <div className="list-row-sub">
             {producto.categoria.nombre} · {producto.subcategoria.nombre}
           </div>

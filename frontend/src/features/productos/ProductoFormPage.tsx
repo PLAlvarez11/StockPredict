@@ -143,7 +143,9 @@ function Formulario({ existente, categorias }: FormularioProps) {
       await cliente.invalidateQueries({ queryKey: CLAVE_PRODUCTOS });
       await cliente.invalidateQueries({ queryKey: CLAVE_CATEGORIAS });
       await cliente.invalidateQueries({ queryKey: CLAVE_SUBCATEGORIAS });
-      navegar('/productos', { state: { aviso: 'Producto guardado' } });
+      navegar(existente ? `/productos/${existente.id}` : '/productos', {
+        state: { aviso: 'Producto guardado' },
+      });
     },
     onError: (error) => {
       const campos: Campo[] = ['nombre', 'subcategoriaId', 'descripcion', 'stockInicial'];
@@ -173,6 +175,7 @@ function Formulario({ existente, categorias }: FormularioProps) {
     })(e);
   };
 
+  const estadoFinal = existente ? existente.estado : activo;
   const sinSubcategorias =
     categoriaNumero !== undefined && subcategorias.isSuccess && opciones.length === 0;
 
@@ -308,8 +311,8 @@ function Formulario({ existente, categorias }: FormularioProps) {
             )}
             <div className="resumen-fila">
               <span>Estado</span>
-              <span className={existente || activo ? 'tag tag-ok' : 'tag tag-inactivo'}>
-                {existente || activo ? 'Activo' : 'Inactivo'}
+              <span className={estadoFinal ? 'tag tag-ok' : 'tag tag-inactivo'}>
+                {estadoFinal ? 'Activo' : 'Inactivo'}
               </span>
             </div>
           </section>
@@ -368,19 +371,6 @@ export function ProductoFormPage() {
     ) : (
       <ErrorState onReintentar={() => void producto.refetch()} />
     );
-  } else if (numero !== null && producto.data && !producto.data.estado) {
-    contenido = (
-      <EmptyState
-        icono={<span aria-hidden="true">!</span>}
-        titulo="El producto está inactivo"
-        texto="Actívalo desde la lista de productos inactivos para poder editarlo."
-        accion={
-          <Link to="/productos" className="btn btn-primary">
-            Volver a productos
-          </Link>
-        }
-      />
-    );
   } else if (categorias.data.length === 0) {
     contenido = (
       <EmptyState
@@ -406,7 +396,10 @@ export function ProductoFormPage() {
 
   return (
     <>
-      <ScreenHeader titulo={titulo} atras="/productos" />
+      <ScreenHeader
+        titulo={titulo}
+        atras={numero === null ? '/productos' : `/productos/${numero}`}
+      />
       {contenido}
     </>
   );

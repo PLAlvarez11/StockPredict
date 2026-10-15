@@ -78,7 +78,7 @@ describe('InicioPage', () => {
     for (const ruta of rutas) expect(pestanas).not.toContain(ruta);
   });
 
-  it('reutiliza la predicción: lista lo que hay que comprar y cuántos de cuántos', async () => {
+  it('PD01: reutiliza la predicción (con el nombre como enlace al detalle): lista lo que hay que comprar y cuántos de cuántos', async () => {
     simularApi({
       'GET /auth/me': yo,
       'GET /productos': listado(2, 1),
@@ -111,7 +111,10 @@ describe('InicioPage', () => {
     montar();
     const seccion = await screen.findByRole('region', { name: 'Para comprar esta semana' });
     expect(within(seccion).getByText('1 de 2')).toBeInTheDocument();
-    expect(within(seccion).getByText('Blusa floral')).toBeInTheDocument();
+    expect(within(seccion).getByRole('link', { name: 'Blusa floral' })).toHaveAttribute(
+      'href',
+      '/productos/1',
+    );
     expect(within(seccion).getByText('7 u.')).toBeInTheDocument();
     expect(within(seccion).queryByText('Vestido')).not.toBeInTheDocument();
   });

@@ -280,6 +280,26 @@ export async function sembrarDemo(ahora: Date = new Date()) {
       filas.push({ productoId: producto.id, ...f });
     }
     await prisma.venta.createMany({ data: filas });
+
+    const compras: {
+      productoId: number;
+      tipo: 'compra';
+      cantidad: number;
+      stockAnterior: number;
+      fecha: Date;
+    }[] = [];
+    for (const [indice, total] of porSemana) {
+      const semana = cerradas[indice];
+      if (!semana || (indice + producto.id) % 4 === 3) continue;
+      compras.push({
+        productoId: producto.id,
+        tipo: 'compra',
+        cantidad: total + (producto.id % 3),
+        stockAnterior: Math.max(0, p.stock - total),
+        fecha: new Date(semana.inicio.getTime() + 2 * DIA_MS + 15 * 3_600_000),
+      });
+    }
+    await prisma.movimientoInventario.createMany({ data: compras });
   }
 
   return { usuarioId: usuario.id, correo: CORREO_DEMO, contrasena: CONTRASENA_DEMO };
