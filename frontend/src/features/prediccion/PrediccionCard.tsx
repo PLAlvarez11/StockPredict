@@ -8,6 +8,7 @@ const CLASE_TAG: Record<Semaforo, string> = {
   rojo: 'tag-danger',
   ambar: 'tag-warn',
   verde: 'tag-ok',
+  neutro: 'tag-neutral',
 };
 
 export function PrediccionCard({ item }: { item: ItemPrediccion }) {

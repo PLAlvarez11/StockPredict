@@ -6,6 +6,7 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.test.ts', 'test/**/*.test.ts'],
     globalSetup: ['./test/global-setup.ts'],
+    setupFiles: ['./test/detector-suspension.ts'],
     env: ENTORNO_PRUEBAS,
     fileParallelism: false,
   },

@@ -206,7 +206,7 @@ function armarItem(base: Base, p: ProductoBase): ItemPrediccion {
     return {
       ...comun,
       estado: 'sin_historial',
-      semaforo: semaforoDe('sin_historial'),
+      semaforo: semaforoDe('sin_historial', null),
       origen: null,
       necesidadPct: null,
       stockSugerido: null,
@@ -216,12 +216,13 @@ function armarItem(base: Base, p: ProductoBase): ItemPrediccion {
   }
   const comprar = cantidadAComprar(estimacion.pts.stockSugerido, p.stock);
   const estado = comprar > 0 ? 'comprar' : 'suficiente';
+  const necesidadPct = necesidadPorcentual(comprar, estimacion.pts.stockSugerido);
   return {
     ...comun,
     estado,
-    semaforo: semaforoDe(estado),
+    semaforo: semaforoDe(estado, necesidadPct),
     origen: estimacion.origen,
-    necesidadPct: necesidadPorcentual(comprar, estimacion.pts.stockSugerido),
+    necesidadPct,
     stockSugerido: estimacion.pts.stockSugerido,
     cantidadAComprar: comprar,
     calculo: {

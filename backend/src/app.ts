@@ -24,6 +24,8 @@ import { manejadorErrores, rutaNoEncontrada } from './shared/errors/error-handle
 import { verificarOrigen } from './shared/http/origen.js';
 import { logger } from './shared/logger.js';
 
+const UMBRAL_LENTA_MS = 2000;
+
 export interface OpcionesApp {
   mailer?: Mailer;
   hasher?: PasswordHasher;
@@ -49,6 +51,19 @@ export function crearApp(opciones: OpcionesApp = {}): Express {
       autoLogging: { ignore: (req) => req.url?.includes('/health/') ?? false },
     }),
   );
+  app.use((req, res, next) => {
+    const inicio = performance.now();
+    res.on('finish', () => {
+      const duracionMs = Math.round(performance.now() - inicio);
+      if (duracionMs >= UMBRAL_LENTA_MS) {
+        logger.warn(
+          { metodo: req.method, ruta: req.path, estado: res.statusCode, duracionMs },
+          'Solicitud lenta (RNF02)',
+        );
+      }
+    });
+    next();
+  });
   app.use(helmet());
   app.use(cors({ origin: env.CORS_ORIGINS, credentials: true }));
   app.use(express.json({ limit: '50kb' }));

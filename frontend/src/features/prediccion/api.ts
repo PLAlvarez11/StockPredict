@@ -1,7 +1,7 @@
 import { api } from '../../lib/apiClient';
 
 export type EstadoPrediccion = 'comprar' | 'suficiente' | 'sin_historial';
-export type Semaforo = 'rojo' | 'ambar' | 'verde';
+export type Semaforo = 'rojo' | 'ambar' | 'verde' | 'neutro';
 export type FiltroSemaforo = 'todos' | Semaforo;
 export type OrigenCalculo = 'producto' | 'subcategoria' | 'categoria';
 

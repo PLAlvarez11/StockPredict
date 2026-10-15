@@ -2,11 +2,20 @@ import { crearApp } from './app.js';
 import { env } from './config/env.js';
 import { prisma } from './shared/db/prisma.js';
 import { logger } from './shared/logger.js';
+import { vigilarBucle } from './shared/vigilancia.js';
 
 const app = crearApp();
 
 const servidor = app.listen(env.PORT, () => {
   logger.info({ puerto: env.PORT, entorno: env.NODE_ENV }, 'API escuchando');
+});
+
+vigilarBucle({
+  alDetectar: (retrasoMs) =>
+    logger.warn(
+      { retrasoMs },
+      'Proceso detenido (suspensión del equipo o bloqueo del bucle de eventos)',
+    ),
 });
 
 let cerrando = false;

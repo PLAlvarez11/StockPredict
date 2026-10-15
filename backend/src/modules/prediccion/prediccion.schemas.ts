@@ -6,7 +6,7 @@ export const filtrosPrediccionQuery = z
     q: z.string().trim().max(150).optional(),
     categoriaId: z.coerce.number().int().positive().optional(),
     subcategoriaId: z.coerce.number().int().positive().optional(),
-    estado: z.enum(['todos', 'rojo', 'ambar', 'verde']).default('todos'),
+    estado: z.enum(['todos', 'rojo', 'ambar', 'verde', 'neutro']).default('todos'),
   })
   .strict();
 

@@ -40,10 +40,19 @@ describe('necesidadPorcentual', () => {
 });
 
 describe('semaforoDe', () => {
-  it('PR14: comprar es rojo, sin historial es ámbar y suficiente es verde', () => {
-    expect(semaforoDe('comprar')).toBe('rojo');
-    expect(semaforoDe('sin_historial')).toBe('ambar');
-    expect(semaforoDe('suficiente')).toBe('verde');
+  it('PR18: rojo desde 50 % de necesidad, ámbar por debajo, verde si no hay que comprar y neutro sin historial', () => {
+    expect(semaforoDe('comprar', 50)).toBe('rojo');
+    expect(semaforoDe('comprar', 100)).toBe('rojo');
+    expect(semaforoDe('comprar', 49)).toBe('ambar');
+    expect(semaforoDe('comprar', 1)).toBe('ambar');
+    expect(semaforoDe('suficiente', 0)).toBe('verde');
+    expect(semaforoDe('sin_historial', null)).toBe('neutro');
+  });
+
+  it('PR18: el límite sigue al porcentaje redondeado (5 de 10 = 50 % rojo; 4 de 9 = 44 % ámbar)', () => {
+    expect(semaforoDe('comprar', necesidadPorcentual(5, 10))).toBe('rojo');
+    expect(semaforoDe('comprar', necesidadPorcentual(4, 9))).toBe('ambar');
+    expect(semaforoDe('comprar', necesidadPorcentual(5, 9))).toBe('rojo');
   });
 });
 

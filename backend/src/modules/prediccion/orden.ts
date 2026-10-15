@@ -1,5 +1,7 @@
 export type EstadoPrediccion = 'comprar' | 'suficiente' | 'sin_historial';
-export type Semaforo = 'rojo' | 'ambar' | 'verde';
+export type Semaforo = 'rojo' | 'ambar' | 'verde' | 'neutro';
+
+export const UMBRAL_ROJO_PCT = 50;
 
 export function necesidadPorcentual(cantidadAComprar: number, stockSugerido: number): number {
   if (!Number.isInteger(cantidadAComprar) || !Number.isInteger(stockSugerido)) {
@@ -10,10 +12,10 @@ export function necesidadPorcentual(cantidadAComprar: number, stockSugerido: num
   return Math.min(100, Math.max(1, redondeado));
 }
 
-export function semaforoDe(estado: EstadoPrediccion): Semaforo {
-  if (estado === 'comprar') return 'rojo';
-  if (estado === 'sin_historial') return 'ambar';
-  return 'verde';
+export function semaforoDe(estado: EstadoPrediccion, necesidadPct: number | null): Semaforo {
+  if (estado === 'sin_historial') return 'neutro';
+  if (estado === 'suficiente') return 'verde';
+  return (necesidadPct ?? 0) >= UMBRAL_ROJO_PCT ? 'rojo' : 'ambar';
 }
 
 export interface Ordenable {

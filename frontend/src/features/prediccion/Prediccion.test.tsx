@@ -54,7 +54,7 @@ const item = (
     subcategoria: { id: 10, nombre: 'Blusas', icono: 't-shirt' },
   },
   stockActual: 3,
-  estado: semaforo === 'rojo' ? 'comprar' : semaforo === 'verde' ? 'suficiente' : 'sin_historial',
+  estado: semaforo === 'neutro' ? 'sin_historial' : semaforo === 'verde' ? 'suficiente' : 'comprar',
   semaforo,
   origen: 'producto',
   necesidadPct: 70,
@@ -81,7 +81,7 @@ const completa = respuesta([
     stockSugerido: 4,
     stockActual: 15,
   }),
-  item('Tote lona', 'ambar', {
+  item('Tote lona', 'neutro', {
     origen: null,
     necesidadPct: null,
     stockSugerido: null,
@@ -187,7 +187,7 @@ describe('PrediccionPage v2', () => {
       within(estados)
         .getAllByRole('button')
         .map((b) => b.textContent),
-    ).toEqual(['Todos', 'Rojo', 'Ámbar', 'Verde']);
+    ).toEqual(['Todos', 'Rojo', 'Ámbar', 'Verde', 'Sin historial']);
     await userEvent.click(within(estados).getByRole('button', { name: 'Verde' }));
     await waitFor(() =>
       expect(
@@ -197,6 +197,26 @@ describe('PrediccionPage v2', () => {
     expect(within(estados).getByRole('button', { name: 'Verde' })).toHaveAttribute(
       'aria-pressed',
       'true',
+    );
+  });
+
+  it('PR18: la leyenda explica los cuatro colores y el filtro usa los mismos', async () => {
+    const llamadas = simularApi({ ...base, 'GET /prediccion': completa });
+    montar(<PrediccionPage />);
+    const leyenda = await screen.findByRole('list', { name: 'Significado de los colores' });
+    expect(
+      within(leyenda)
+        .getAllByRole('listitem')
+        .map((l) => l.textContent),
+    ).toEqual([
+      'Rojo: necesidad de 50 % o más',
+      'Ámbar: necesidad menor a 50 %',
+      'Verde: no hace falta comprar',
+      'Sin historial: faltan ventas para sugerir',
+    ]);
+    await userEvent.click(screen.getByRole('button', { name: 'Sin historial' }));
+    await waitFor(() =>
+      expect(llamadas.some((l) => l.ruta === '/prediccion?estado=neutro')).toBe(true),
     );
   });
 

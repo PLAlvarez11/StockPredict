@@ -121,7 +121,7 @@ describe('predicción: origen del cálculo y margen', () => {
     const tote = item(await prediccion(), 'Tote lona');
     expect(tote).toMatchObject({
       estado: 'sin_historial',
-      semaforo: 'ambar',
+      semaforo: 'neutro',
       origen: null,
       necesidadPct: null,
       stockSugerido: null,
@@ -162,6 +162,7 @@ describe('predicción: origen del cálculo y margen', () => {
 describe('GET /api/v1/prediccion con búsqueda y filtros', () => {
   beforeEach(async () => {
     await crearProducto(blusas, 'Blusa floral', 3, [8, 6, 5]);
+    await crearProducto(blusas, 'Blusa lila', 7, [8, 6, 5]);
     await crearProducto(vestidos, 'Vestido midi', 40, [6, 5, 4]);
     await crearProducto(totes, 'Tote lona', 5);
   });
@@ -169,23 +170,25 @@ describe('GET /api/v1/prediccion con búsqueda y filtros', () => {
   it('PR14: sin filtros devuelve todos los activos, con la semana actual y los totales', async () => {
     const res = await prediccion();
     expect(res.status).toBe(200);
-    expect(nombres(res)).toEqual(['Blusa floral', 'Vestido midi', 'Tote lona']);
-    expect(res.body).toMatchObject({ totalActivos: 3, totalAComprar: 1, totalFiltrados: 3 });
+    expect(nombres(res)).toEqual(['Blusa floral', 'Blusa lila', 'Vestido midi', 'Tote lona']);
+    expect(res.body).toMatchObject({ totalActivos: 4, totalAComprar: 2, totalFiltrados: 4 });
     expect(res.body.semanaActual.inicio).toBeTypeOf('string');
   });
 
   it('PR14: el buscador encuentra por nombre, categoría o subcategoría, sin importar acentos ni mayúsculas', async () => {
     expect(nombres(await prediccion('?q=FLORAL'))).toEqual(['Blusa floral']);
+    expect(nombres(await prediccion('?q=lila'))).toEqual(['Blusa lila']);
     expect(nombres(await prediccion('?q=bolsos'))).toEqual(['Tote lona']);
     expect(nombres(await prediccion('?q=vestídos'))).toEqual(['Vestido midi']);
     const vacio = await prediccion('?q=zzz');
     expect(vacio.body.items).toEqual([]);
-    expect(vacio.body).toMatchObject({ totalActivos: 3, totalFiltrados: 0 });
+    expect(vacio.body).toMatchObject({ totalActivos: 4, totalFiltrados: 0 });
   });
 
   it('PR14: filtra por categoría y por subcategoría', async () => {
     expect(nombres(await prediccion(`?categoriaId=${blusas.categoria.id}`))).toEqual([
       'Blusa floral',
+      'Blusa lila',
       'Vestido midi',
     ]);
     expect(nombres(await prediccion(`?subcategoriaId=${vestidos.subcategoria.id}`))).toEqual([
@@ -193,11 +196,27 @@ describe('GET /api/v1/prediccion con búsqueda y filtros', () => {
     ]);
   });
 
-  it('PR14: filtra por estado Rojo, Ámbar y Verde conservando el orden', async () => {
+  it('PR18: el semáforo va por urgencia: Blusa floral 70 % rojo, Blusa lila 30 % ámbar, Vestido midi verde, Tote lona neutro', async () => {
+    const res = await prediccion();
+    expect(
+      res.body.items.map((i: { semaforo: string; necesidadPct: number | null }) => [
+        i.semaforo,
+        i.necesidadPct,
+      ]),
+    ).toEqual([
+      ['rojo', 70],
+      ['ambar', 30],
+      ['verde', 0],
+      ['neutro', null],
+    ]);
+  });
+
+  it('PR18: el filtro por estado usa los mismos colores y conserva el orden', async () => {
     expect(nombres(await prediccion('?estado=rojo'))).toEqual(['Blusa floral']);
+    expect(nombres(await prediccion('?estado=ambar'))).toEqual(['Blusa lila']);
     expect(nombres(await prediccion('?estado=verde'))).toEqual(['Vestido midi']);
-    expect(nombres(await prediccion('?estado=ambar'))).toEqual(['Tote lona']);
-    expect(nombres(await prediccion('?estado=todos'))).toHaveLength(3);
+    expect(nombres(await prediccion('?estado=neutro'))).toEqual(['Tote lona']);
+    expect(nombres(await prediccion('?estado=todos'))).toHaveLength(4);
   });
 
   it('PR14: el filtro conserva el mismo orden relativo que la lista completa', async () => {

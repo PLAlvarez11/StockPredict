@@ -21,6 +21,14 @@ const ESTADOS: { id: FiltroSemaforo; etiqueta: string }[] = [
   { id: 'rojo', etiqueta: 'Rojo' },
   { id: 'ambar', etiqueta: 'Ámbar' },
   { id: 'verde', etiqueta: 'Verde' },
+  { id: 'neutro', etiqueta: 'Sin historial' },
+];
+
+const LEYENDA: { id: Exclude<FiltroSemaforo, 'todos'>; texto: string }[] = [
+  { id: 'rojo', texto: 'Rojo: necesidad de 50 % o más' },
+  { id: 'ambar', texto: 'Ámbar: necesidad menor a 50 %' },
+  { id: 'verde', texto: 'Verde: no hace falta comprar' },
+  { id: 'neutro', texto: 'Sin historial: faltan ventas para sugerir' },
 ];
 
 export function PrediccionPage() {
@@ -174,6 +182,14 @@ export function PrediccionPage() {
           </Button>
         ))}
       </div>
+      <ul className="leyenda" aria-label="Significado de los colores">
+        {LEYENDA.map((l) => (
+          <li key={l.id}>
+            <span className={`punto punto-${l.id}`} aria-hidden="true" />
+            {l.texto}
+          </li>
+        ))}
+      </ul>
       <div className="page" style={{ paddingBottom: 0 }}>
         <Button bloque disabled aria-describedby="exportar-pronto">
           <Export size={18} aria-hidden="true" />
