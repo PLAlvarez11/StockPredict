@@ -30,6 +30,7 @@ export const listarSubcategoriasQuery = z
   .object({
     categoriaId: z.coerce.number().int().positive().optional(),
     estado: filtroActivos,
+    q: z.string().trim().max(150).optional(),
   })
   .strict();
 

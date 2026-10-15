@@ -36,10 +36,4 @@ export function compararPredicciones(a: Ordenable, b: Ordenable): number {
   );
 }
 
-export function normalizarTexto(texto: string): string {
-  return texto
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase()
-    .trim();
-}
+export { normalizarTexto } from '../../shared/texto.js';

@@ -1,44 +1,51 @@
 import {
   ArrowCounterClockwise,
+  EyeSlash,
   PencilSimple,
   Plus,
   ShoppingBag,
-  EyeSlash,
 } from '@phosphor-icons/react';
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { useAviso } from '../../components/layout/Avisos';
 import { ScreenHeader } from '../../components/layout/ScreenHeader';
 import { Button } from '../../components/ui/Button';
+import { Buscador } from '../../components/ui/Buscador';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { IconBadge } from '../../components/ui/IconBadge';
 import { ListSkeleton } from '../../components/ui/ListSkeleton';
-import { Notice } from '../../components/ui/Notice';
+import { SinResultados } from '../../components/ui/SinResultados';
+import { VerMas } from '../../components/ui/VerMas';
+import { useBusqueda } from '../../lib/useBusqueda';
 import { useCategorias } from '../categorias/hooks';
-import { useSubcategorias } from '../subcategorias/hooks';
+import { FiltrosCategoria } from '../categorias/FiltrosCategoria';
 import { EnlaceProducto } from './EnlaceProducto';
-import { useProductos } from './hooks';
-import { useCambioEstado } from './useCambioEstado';
+import { useProductosPaginados } from './hooks';
 import { StockTag } from './StockTag';
+import { useCambioEstado } from './useCambioEstado';
 
 export function ProductosPage() {
   const [inactivos, setInactivos] = useState(false);
   const [filtro, setFiltro] = useState<number | undefined>(undefined);
   const [filtroSub, setFiltroSub] = useState<number | undefined>(undefined);
+  const busqueda = useBusqueda();
   const categorias = useCategorias();
-  const subcategorias = useSubcategorias(filtro);
-  const productos = useProductos({
+  const productos = useProductosPaginados({
     categoriaId: filtro,
     subcategoriaId: filtroSub,
     estado: inactivos ? 'inactivos' : 'activos',
+    q: busqueda.consulta,
   });
-  const estado = (useLocation().state ?? {}) as { aviso?: string };
-  const [aviso, setAviso] = useState<string | undefined>(estado.aviso);
-  const { pedirDesactivar, pedirActivar, dialogos } = useCambioEstado(setAviso);
+  const { pedirDesactivar, pedirActivar, dialogos } = useCambioEstado(useAviso());
 
   const elegirCategoria = (id: number | undefined) => {
     setFiltro(id);
     setFiltroSub(undefined);
+  };
+  const limpiar = () => {
+    busqueda.limpiar();
+    elegirCategoria(undefined);
   };
 
   const accion = (
@@ -47,7 +54,8 @@ export function ProductosPage() {
     </Link>
   );
 
-  const hayFiltro = filtro !== undefined || filtroSub !== undefined;
+  const hayFiltro = filtro !== undefined || filtroSub !== undefined || busqueda.activa;
+  const sinDatos = productos.datos.length === 0;
 
   let contenido;
   if (productos.isPending || categorias.isPending) {
@@ -61,7 +69,15 @@ export function ProductosPage() {
         }}
       />
     );
-  } else if (productos.data.datos.length === 0 && inactivos) {
+  } else if (sinDatos && hayFiltro) {
+    contenido = (
+      <SinResultados
+        busqueda={busqueda.consulta}
+        onLimpiar={limpiar}
+        etiquetaBoton="Quitar búsqueda y filtros"
+      />
+    );
+  } else if (sinDatos && inactivos) {
     contenido = (
       <EmptyState
         icono={<ShoppingBag size={26} weight="bold" />}
@@ -69,15 +85,7 @@ export function ProductosPage() {
         texto="Los productos que desactives aparecerán aquí para que puedas activarlos de nuevo."
       />
     );
-  } else if (productos.data.datos.length === 0 && hayFiltro) {
-    contenido = (
-      <EmptyState
-        icono={<ShoppingBag size={26} weight="bold" />}
-        titulo="No hay productos con este filtro"
-        accion={<Button onClick={() => elegirCategoria(undefined)}>Ver todos</Button>}
-      />
-    );
-  } else if (productos.data.datos.length === 0 && categorias.data.length === 0) {
+  } else if (sinDatos && categorias.data.length === 0) {
     contenido = (
       <EmptyState
         icono={<ShoppingBag size={26} weight="bold" />}
@@ -90,7 +98,7 @@ export function ProductosPage() {
         }
       />
     );
-  } else if (productos.data.datos.length === 0) {
+  } else if (sinDatos) {
     contenido = (
       <EmptyState
         icono={<ShoppingBag size={26} weight="bold" />}
@@ -105,54 +113,70 @@ export function ProductosPage() {
     );
   } else {
     contenido = (
-      <ul className="page" style={{ listStyle: 'none', margin: 0 }}>
-        {productos.data.datos.map((p) => (
-          <li key={p.id} className={p.estado ? 'list-row' : 'list-row list-row-inactiva'}>
-            <IconBadge icono={p.subcategoria.icono} />
-            <div className="list-row-main">
-              <div className="list-row-title">
-                <EnlaceProducto id={p.id} nombre={p.nombre} />
+      <>
+        <ul className="page" style={{ listStyle: 'none', margin: 0 }}>
+          {productos.datos.map((p) => (
+            <li key={p.id} className={p.estado ? 'list-row' : 'list-row list-row-inactiva'}>
+              <IconBadge icono={p.subcategoria.icono} />
+              <div className="list-row-main">
+                <div className="list-row-title">
+                  <EnlaceProducto id={p.id} nombre={p.nombre} />
+                </div>
+                <div className="list-row-sub">
+                  {p.categoria.nombre} · {p.subcategoria.nombre}
+                </div>
               </div>
-              <div className="list-row-sub">
-                {p.categoria.nombre} · {p.subcategoria.nombre}
-              </div>
-            </div>
-            {p.estado ? (
-              <>
-                <StockTag stock={p.stock} nivel={p.nivelStock} />
-                <Link
-                  to={`/productos/${p.id}/editar`}
-                  className="btn btn-secondary btn-icon"
-                  aria-label={`Editar ${p.nombre}`}
-                >
-                  <PencilSimple size={18} aria-hidden="true" />
-                </Link>
-                <Button
-                  icono
-                  aria-label={`Desactivar ${p.nombre}`}
-                  onClick={() => pedirDesactivar(p)}
-                >
-                  <EyeSlash size={18} aria-hidden="true" />
-                </Button>
-              </>
-            ) : (
-              <>
-                <span className="tag tag-inactivo">Inactivo</span>
-                <Button aria-label={`Activar ${p.nombre}`} onClick={() => pedirActivar(p)}>
-                  <ArrowCounterClockwise size={16} aria-hidden="true" />
-                  Activar
-                </Button>
-              </>
-            )}
-          </li>
-        ))}
-      </ul>
+              {p.estado ? (
+                <>
+                  <StockTag stock={p.stock} nivel={p.nivelStock} />
+                  <Link
+                    to={`/productos/${p.id}/editar`}
+                    className="btn btn-secondary btn-icon"
+                    aria-label={`Editar ${p.nombre}`}
+                  >
+                    <PencilSimple size={18} aria-hidden="true" />
+                  </Link>
+                  <Button
+                    icono
+                    aria-label={`Desactivar ${p.nombre}`}
+                    onClick={() => pedirDesactivar(p)}
+                  >
+                    <EyeSlash size={18} aria-hidden="true" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <span className="tag tag-inactivo">Inactivo</span>
+                  <Button aria-label={`Activar ${p.nombre}`} onClick={() => pedirActivar(p)}>
+                    <ArrowCounterClockwise size={16} aria-hidden="true" />
+                    Activar
+                  </Button>
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
+        <VerMas
+          mostrados={productos.datos.length}
+          total={productos.total}
+          hayMas={productos.hasNextPage}
+          cargando={productos.isFetchingNextPage}
+          onVerMas={() => void productos.fetchNextPage()}
+        />
+      </>
     );
   }
 
   return (
     <>
       <ScreenHeader titulo="Productos" accion={accion} />
+      <div className="page" style={{ paddingTop: 0, paddingBottom: 12 }}>
+        <Buscador
+          etiqueta="Buscar por nombre, categoría o subcategoría"
+          valor={busqueda.texto}
+          onCambio={busqueda.setTexto}
+        />
+      </div>
       <div className="segmento" role="group" aria-label="Estado de los productos">
         <Button
           variante={inactivos ? 'secondary' : 'primary'}
@@ -169,53 +193,15 @@ export function ProductosPage() {
           Inactivos
         </Button>
       </div>
-      {categorias.data && categorias.data.length > 0 && (
-        <div className="chips" role="group" aria-label="Filtrar por categoría">
-          <Button
-            variante={filtro === undefined ? 'primary' : 'secondary'}
-            aria-pressed={filtro === undefined}
-            onClick={() => elegirCategoria(undefined)}
-          >
-            Todas
-          </Button>
-          {categorias.data.map((c) => (
-            <Button
-              key={c.id}
-              variante={filtro === c.id ? 'primary' : 'secondary'}
-              aria-pressed={filtro === c.id}
-              onClick={() => elegirCategoria(c.id)}
-            >
-              {c.nombre}
-            </Button>
-          ))}
-        </div>
-      )}
-      {filtro !== undefined && subcategorias.data && subcategorias.data.length > 0 && (
-        <div className="chips chips-sub" role="group" aria-label="Filtrar por subcategoría">
-          <Button
-            variante={filtroSub === undefined ? 'primary' : 'secondary'}
-            aria-pressed={filtroSub === undefined}
-            onClick={() => setFiltroSub(undefined)}
-          >
-            Todas
-          </Button>
-          {subcategorias.data.map((s) => (
-            <Button
-              key={s.id}
-              variante={filtroSub === s.id ? 'primary' : 'secondary'}
-              aria-pressed={filtroSub === s.id}
-              onClick={() => setFiltroSub(s.id)}
-            >
-              {s.nombre}
-            </Button>
-          ))}
-        </div>
-      )}
-      {aviso && (
-        <div className="page" style={{ paddingBottom: 12 }}>
-          <Notice>{aviso}</Notice>
-        </div>
-      )}
+      <FiltrosCategoria
+        categoriaId={filtro}
+        subcategoriaId={filtroSub}
+        onCategoria={elegirCategoria}
+        onSubcategoria={setFiltroSub}
+      />
+      <div className="sr-only" role="status" aria-live="polite">
+        {!productos.isPending && hayFiltro ? `${productos.total} productos encontrados` : ''}
+      </div>
       {contenido}
 
       {dialogos}

@@ -17,8 +17,11 @@ export interface CategoriaForm {
 }
 
 export const categoriasApi = {
-  listar: (estado: FiltroEstado = 'activos') =>
-    api<Categoria[]>('GET', `/categorias?estado=${estado}`),
+  listar: (estado: FiltroEstado = 'activos', q?: string) =>
+    api<Categoria[]>(
+      'GET',
+      `/categorias?estado=${estado}${q ? `&q=${encodeURIComponent(q)}` : ''}`,
+    ),
   crear: (datos: CategoriaForm) => api<Categoria>('POST', '/categorias', datos),
   editar: (id: number, datos: Partial<CategoriaForm>) =>
     api<Categoria>('PATCH', `/categorias/${id}`, datos),

@@ -1,5 +1,6 @@
 import { esViolacionUnica } from '../../shared/db/errores.js';
 import { AppError, noEncontrado } from '../../shared/errors/app-error.js';
+import { coincideBusqueda } from '../../shared/texto.js';
 import type { FiltroActivos } from '../../shared/http/estado.js';
 import { categoriasRepository as repo } from './categorias.repository.js';
 import type { CrearCategoriaInput, EditarCategoriaInput } from './categorias.schemas.js';
@@ -9,7 +10,7 @@ interface FilaCategoria {
   nombre: string;
   icono: string;
   estado: boolean;
-  subcategorias: { id: number; estado: boolean }[];
+  subcategorias: { id: number; nombre: string; estado: boolean }[];
 }
 
 const aDto = (c: FilaCategoria, productosPorSubcategoria: Map<number, number>) => {
@@ -46,12 +47,14 @@ async function dto(usuarioId: number, id: number) {
 }
 
 export const categoriasService = {
-  async listar(usuarioId: number, filtro: FiltroActivos) {
+  async listar(usuarioId: number, filtro: FiltroActivos, q?: string) {
     const [categorias, productos] = await Promise.all([
       repo.listar(usuarioId, filtro),
       repo.productosActivosPorSubcategoria(usuarioId),
     ]);
-    return categorias.map((c) => aDto(c, productos));
+    return categorias
+      .filter((c) => coincideBusqueda(q, c.nombre, ...c.subcategorias.map((s) => s.nombre)))
+      .map((c) => aDto(c, productos));
   },
 
   async obtener(id: number, usuarioId: number) {

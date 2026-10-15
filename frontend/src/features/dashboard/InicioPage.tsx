@@ -11,12 +11,11 @@ import {
   Warning,
 } from '@phosphor-icons/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { lazy, Suspense, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Dialog } from '../../components/ui/Dialog';
 import { IconBadge } from '../../components/ui/IconBadge';
-import { Notice } from '../../components/ui/Notice';
 import { authApi } from '../auth/api';
 import { CLAVE_SESION, useSesion } from '../auth/useSesion';
 import { prediccionApi } from '../prediccion/api';
@@ -24,6 +23,8 @@ import { CLAVE_PREDICCION } from '../prediccion/PrediccionPage';
 import { EnlaceProducto } from '../productos/EnlaceProducto';
 import { useProductos } from '../productos/hooks';
 import { useTitulo } from '../../lib/useTitulo';
+
+const VentasSemana = lazy(() => import('./VentasSemana'));
 
 const ATAJOS = [
   { ruta: '/productos/nuevo', etiqueta: 'Crear producto', Icono: PlusCircle },
@@ -120,7 +121,6 @@ export function InicioPage() {
   useTitulo('Inicio');
   const { data: usuario } = useSesion();
   const cliente = useQueryClient();
-  const aviso = ((useLocation().state ?? {}) as { aviso?: string }).aviso;
   const [confirmando, setConfirmando] = useState(false);
 
   const salir = useMutation({
@@ -143,7 +143,6 @@ export function InicioPage() {
         </Button>
       </div>
       <div className="page" style={{ gap: 16 }}>
-        {aviso && <Notice>{aviso}</Notice>}
         <Link to="/ventas/nueva" className="hero-accion">
           <span className="hero-accion-icono" aria-hidden="true">
             <ShoppingCartSimple size={24} weight="bold" />
@@ -165,6 +164,10 @@ export function InicioPage() {
             </Link>
           ))}
         </nav>
+
+        <Suspense fallback={<div className="skeleton" style={{ height: 220 }} />}>
+          <VentasSemana />
+        </Suspense>
 
         <PorComprar />
       </div>

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useForm, useWatch, type FieldPath } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
+import { useAviso } from '../../components/layout/Avisos';
 import { ScreenHeader } from '../../components/layout/ScreenHeader';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -76,6 +77,7 @@ interface FormularioProps {
 
 function Formulario({ existente, categorias }: FormularioProps) {
   const navegar = useNavigate();
+  const avisar = useAviso();
   const cliente = useQueryClient();
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [paso, setPaso] = useState(1);
@@ -143,9 +145,8 @@ function Formulario({ existente, categorias }: FormularioProps) {
       await cliente.invalidateQueries({ queryKey: CLAVE_PRODUCTOS });
       await cliente.invalidateQueries({ queryKey: CLAVE_CATEGORIAS });
       await cliente.invalidateQueries({ queryKey: CLAVE_SUBCATEGORIAS });
-      navegar(existente ? `/productos/${existente.id}` : '/productos', {
-        state: { aviso: 'Producto guardado' },
-      });
+      avisar('Producto guardado');
+      navegar(existente ? `/productos/${existente.id}` : '/productos');
     },
     onError: (error) => {
       const campos: Campo[] = ['nombre', 'subcategoriaId', 'descripcion', 'stockInicial'];

@@ -2,6 +2,7 @@ import { env } from '../../config/env.js';
 import { esViolacionUnica } from '../../shared/db/errores.js';
 import { AppError, noEncontrado } from '../../shared/errors/app-error.js';
 import { nivelStock } from '../../shared/stock.js';
+import { coincideBusqueda } from '../../shared/texto.js';
 import { diaLocal, ultimasSemanas } from '../../shared/time/semana.js';
 import { productosRepository as repo } from './productos.repository.js';
 import type {
@@ -69,13 +70,31 @@ const subcategoriaInvalida = () =>
     ],
   });
 
+async function listarConBusqueda(usuarioId: number, query: ListarProductosQuery) {
+  const todos = await repo.listarTodos(usuarioId, query.categoriaId, query.subcategoriaId);
+  const coinciden = todos.filter((p) =>
+    coincideBusqueda(query.q, p.nombre, p.subcategoria.nombre, p.subcategoria.categoria.nombre),
+  );
+  const visibles = coinciden.filter(
+    (p) => query.estado === 'todos' || p.estado === (query.estado === 'activos'),
+  );
+  const desde = (query.page - 1) * query.limit;
+  return {
+    datos: visibles.slice(desde, desde + query.limit).map(aDto),
+    total: visibles.length,
+    stockBajo: coinciden.filter((p) => p.estado && p.stock <= env.STOCK_BAJO_UMBRAL).length,
+    page: query.page,
+    limit: query.limit,
+  };
+}
+
 export const productosService = {
   async listar(usuarioId: number, query: ListarProductosQuery) {
+    if (query.q !== undefined && query.q !== '') return listarConBusqueda(usuarioId, query);
     const { datos, total, stockBajo } = await repo.listar(usuarioId, {
       categoriaId: query.categoriaId,
       subcategoriaId: query.subcategoriaId,
       estado: query.estado,
-      q: query.q,
       skip: (query.page - 1) * query.limit,
       take: query.limit,
       umbral: env.STOCK_BAJO_UMBRAL,

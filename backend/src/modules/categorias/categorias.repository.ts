@@ -6,7 +6,7 @@ export const categoriasRepository = {
     prisma.categoria.findMany({
       where: { usuarioId, ...condicionEstado(filtro) },
       orderBy: { id: 'asc' },
-      include: { subcategorias: { select: { id: true, estado: true } } },
+      include: { subcategorias: { select: { id: true, nombre: true, estado: true } } },
     }),
 
   productosActivosPorSubcategoria: async (usuarioId: number) => {
@@ -21,7 +21,7 @@ export const categoriasRepository = {
   buscar: (id: number, usuarioId: number) =>
     prisma.categoria.findFirst({
       where: { id, usuarioId },
-      include: { subcategorias: { select: { id: true, estado: true } } },
+      include: { subcategorias: { select: { id: true, nombre: true, estado: true } } },
     }),
 
   buscarPorNombreActiva: (usuarioId: number, nombre: string) =>

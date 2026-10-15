@@ -32,7 +32,19 @@
 
   --font-heading: 'Inter Variable', system-ui, sans-serif;
   --font-body: 'Inter Variable', system-ui, sans-serif;
-  --font-heading-weight: 500;
+  --font-heading-weight: 600;
+
+  --fs-xs: 14px;
+  --fs-sm: 15px;
+  --fs-base: 17px;
+  --fs-md: 18px;
+  --fs-lg: 20px;
+  --fs-xl: 22px;
+  --fs-h2: 22px;
+  --fs-h1: 28px;
+  --fs-display: 34px;
+  --fs-nav: 12px;
+  --lh-base: 1.5;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -53,8 +65,8 @@
   --shadow-lg: 0 0 0 1px var(--color-divider), 0 18px 44px rgba(107, 70, 83, 0.14);
   --shadow-cta: 0 10px 24px rgba(232, 146, 124, 0.28);
 
-  --control-height: 46px;
-  --target-size: 44px;
+  --control-height: 52px;
+  --target-size: 48px;
   --nav-height: 64px;
   --app-max-width: 480px;
 }

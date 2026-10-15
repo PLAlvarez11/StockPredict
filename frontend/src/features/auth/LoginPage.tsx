@@ -14,7 +14,6 @@ import { CLAVE_SESION } from './useSesion';
 import { useTitulo } from '../../lib/useTitulo';
 
 interface EstadoLogin {
-  aviso?: string;
   desde?: string;
 }
 
@@ -52,8 +51,6 @@ export function LoginPage() {
           <h1>StockPredict</h1>
           <p>Inventario y predicción de compra</p>
         </div>
-
-        {estado.aviso && <Notice>{estado.aviso}</Notice>}
 
         <form
           className="auth-form"

@@ -1,3 +1,4 @@
+import { coincideBusqueda } from '../../shared/texto.js';
 import { esViolacionUnica } from '../../shared/db/errores.js';
 import { AppError, noEncontrado } from '../../shared/errors/app-error.js';
 import type { FiltroActivos } from '../../shared/http/estado.js';
@@ -58,13 +59,15 @@ async function dto(usuarioId: number, id: number) {
 export const subcategoriasService = {
   async listar(
     usuarioId: number,
-    filtros: { categoriaId: number | undefined; estado: FiltroActivos },
+    filtros: { categoriaId: number | undefined; estado: FiltroActivos; q?: string | undefined },
   ) {
     const [filas, productos] = await Promise.all([
       repo.listar(usuarioId, filtros),
       repo.productosActivosPorSubcategoria(usuarioId),
     ]);
-    return filas.map((s) => aDto(s, productos.get(s.id) ?? 0));
+    return filas
+      .filter((s) => coincideBusqueda(filtros.q, s.nombre, s.categoria.nombre))
+      .map((s) => aDto(s, productos.get(s.id) ?? 0));
   },
 
   async obtener(id: number, usuarioId: number) {

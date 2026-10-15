@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
+import { useAviso } from '../../components/layout/Avisos';
 import { ScreenHeader } from '../../components/layout/ScreenHeader';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -36,6 +37,7 @@ const textoUnidades = (n: number) =>
 
 function Formulario({ productos }: { productos: Producto[] }) {
   const navegar = useNavigate();
+  const avisar = useAviso();
   const cliente = useQueryClient();
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
 
@@ -59,10 +61,12 @@ function Formulario({ productos }: { productos: Producto[] }) {
     onSuccess: async () => {
       await Promise.all([
         cliente.invalidateQueries({ queryKey: CLAVE_PRODUCTOS }),
+        cliente.invalidateQueries({ queryKey: ['ventas'] }),
         cliente.invalidateQueries({ queryKey: CLAVE_PREDICCION }),
         cliente.invalidateQueries({ queryKey: CLAVE_CATEGORIAS }),
       ]);
-      navegar('/', { state: { aviso: 'Venta registrada correctamente' } });
+      avisar('Venta registrada correctamente');
+      navegar('/');
     },
     onError: (error) =>
       setErrorGeneral(aplicarErroresServidor(error, setError, ['productoId', 'cantidad'])),

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
+import { useAviso } from '../../components/layout/Avisos';
 import { ScreenHeader } from '../../components/layout/ScreenHeader';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -37,6 +38,7 @@ interface FormularioProps {
 
 function Formulario({ categoriaId, iconoCategoria, existente }: FormularioProps) {
   const navegar = useNavigate();
+  const avisar = useAviso();
   const cliente = useQueryClient();
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
 
@@ -64,7 +66,8 @@ function Formulario({ categoriaId, iconoCategoria, existente }: FormularioProps)
       await cliente.invalidateQueries({ queryKey: CLAVE_SUBCATEGORIAS });
       await cliente.invalidateQueries({ queryKey: CLAVE_CATEGORIAS });
       await cliente.invalidateQueries({ queryKey: ['productos'] });
-      navegar('/categorias', { state: { aviso: 'Subcategoría guardada', abrir: categoriaId } });
+      avisar('Subcategoría guardada');
+      navegar('/categorias', { state: { abrir: categoriaId } });
     },
     onError: (error) =>
       setErrorGeneral(aplicarErroresServidor(error, setError, ['nombre', 'icono', 'categoriaId'])),

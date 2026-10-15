@@ -18,7 +18,6 @@ export interface FiltrosListado {
   categoriaId: number | undefined;
   subcategoriaId: number | undefined;
   estado: FiltroActivos;
-  q: string | undefined;
   skip: number;
   take: number;
   umbral: number;
@@ -32,7 +31,6 @@ export const productosRepository = {
       ...(filtros.categoriaId !== undefined
         ? { subcategoria: { categoriaId: filtros.categoriaId } }
         : {}),
-      ...(filtros.q ? { nombre: { contains: filtros.q, mode: 'insensitive' } } : {}),
     };
     const where: Prisma.ProductoWhereInput = { ...base, ...condicionEstado(filtros.estado) };
     const [datos, total, stockBajo] = await Promise.all([
@@ -48,6 +46,21 @@ export const productosRepository = {
     ]);
     return { datos, total, stockBajo };
   },
+
+  listarTodos: (
+    usuarioId: number,
+    categoriaId: number | undefined,
+    subcategoriaId: number | undefined,
+  ) =>
+    prisma.producto.findMany({
+      where: {
+        usuarioId,
+        ...(subcategoriaId !== undefined ? { subcategoriaId } : {}),
+        ...(categoriaId !== undefined ? { subcategoria: { categoriaId } } : {}),
+      },
+      orderBy: { id: 'asc' },
+      include: conSubcategoria,
+    }),
 
   buscar: (id: number, usuarioId: number) =>
     prisma.producto.findFirst({ where: { id, usuarioId }, include: conSubcategoria }),

@@ -1,16 +1,17 @@
-import { ChartLineUp, Export, MagnifyingGlass, ShoppingBag } from '@phosphor-icons/react';
+import { ChartLineUp, Export, ShoppingBag } from '@phosphor-icons/react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
+import { Buscador } from '../../components/ui/Buscador';
+import { SinResultados } from '../../components/ui/SinResultados';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { ListSkeleton } from '../../components/ui/ListSkeleton';
 import { formatearSemana } from '../../lib/formato';
-import { useRetraso } from '../../lib/useRetraso';
+import { useBusqueda } from '../../lib/useBusqueda';
 import { useTitulo } from '../../lib/useTitulo';
-import { useCategorias } from '../categorias/hooks';
-import { useSubcategorias } from '../subcategorias/hooks';
+import { FiltrosCategoria } from '../categorias/FiltrosCategoria';
 import { prediccionApi, type FiltroSemaforo } from './api';
 import { PrediccionCard } from './PrediccionCard';
 
@@ -33,15 +34,12 @@ const LEYENDA: { id: Exclude<FiltroSemaforo, 'todos'>; texto: string }[] = [
 
 export function PrediccionPage() {
   useTitulo('Predicción de compra');
-  const [busqueda, setBusqueda] = useState('');
+  const busqueda = useBusqueda();
   const [categoriaId, setCategoriaId] = useState<number | undefined>(undefined);
   const [subcategoriaId, setSubcategoriaId] = useState<number | undefined>(undefined);
   const [estado, setEstado] = useState<FiltroSemaforo>('todos');
-  const q = useRetraso(busqueda.trim());
-  const filtros = { q: q === '' ? undefined : q, categoriaId, subcategoriaId, estado };
+  const filtros = { q: busqueda.consulta, categoriaId, subcategoriaId, estado };
 
-  const categorias = useCategorias();
-  const subcategorias = useSubcategorias(categoriaId);
   const prediccion = useQuery({
     queryKey: [...CLAVE_PREDICCION, filtros],
     queryFn: () => prediccionApi.obtener(filtros),
@@ -50,14 +48,14 @@ export function PrediccionPage() {
   });
 
   const datos = prediccion.data;
-  const hayFiltro = q !== '' || categoriaId !== undefined || estado !== 'todos';
+  const hayFiltro = busqueda.activa || categoriaId !== undefined || estado !== 'todos';
 
   const elegirCategoria = (id: number | undefined) => {
     setCategoriaId(id);
     setSubcategoriaId(undefined);
   };
   const limpiar = () => {
-    setBusqueda('');
+    busqueda.limpiar();
     setCategoriaId(undefined);
     setSubcategoriaId(undefined);
     setEstado('todos');
@@ -83,10 +81,10 @@ export function PrediccionPage() {
     );
   } else if (datos && datos.items.length === 0) {
     contenido = (
-      <EmptyState
-        icono={<MagnifyingGlass size={26} weight="bold" />}
-        titulo="No encontramos productos con esos filtros"
-        accion={<Button onClick={limpiar}>Quitar filtros</Button>}
+      <SinResultados
+        busqueda={busqueda.consulta}
+        onLimpiar={limpiar}
+        etiquetaBoton="Quitar filtros"
       />
     );
   } else if (datos) {
@@ -113,62 +111,19 @@ export function PrediccionPage() {
             {formatearSemana(datos.semanaActual)}
           </p>
         )}
-        <div className="buscador">
-          <MagnifyingGlass size={18} aria-hidden="true" />
-          <input
-            type="search"
-            className="input"
-            aria-label="Buscar por nombre, categoría o subcategoría"
-            placeholder="Buscar por nombre, categoría o subcategoría"
-            autoComplete="off"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-          />
-        </div>
+        <Buscador
+          etiqueta="Buscar por nombre, categoría o subcategoría"
+          valor={busqueda.texto}
+          onCambio={busqueda.setTexto}
+        />
       </header>
 
-      {categorias.data && categorias.data.length > 0 && (
-        <div className="chips chips-pred" role="group" aria-label="Filtrar por categoría">
-          <Button
-            variante={categoriaId === undefined ? 'primary' : 'secondary'}
-            aria-pressed={categoriaId === undefined}
-            onClick={() => elegirCategoria(undefined)}
-          >
-            Todas
-          </Button>
-          {categorias.data.map((c) => (
-            <Button
-              key={c.id}
-              variante={categoriaId === c.id ? 'primary' : 'secondary'}
-              aria-pressed={categoriaId === c.id}
-              onClick={() => elegirCategoria(c.id)}
-            >
-              {c.nombre}
-            </Button>
-          ))}
-        </div>
-      )}
-      {categoriaId !== undefined && subcategorias.data && subcategorias.data.length > 0 && (
-        <div className="chips" role="group" aria-label="Filtrar por subcategoría">
-          <Button
-            variante={subcategoriaId === undefined ? 'primary' : 'secondary'}
-            aria-pressed={subcategoriaId === undefined}
-            onClick={() => setSubcategoriaId(undefined)}
-          >
-            Todas
-          </Button>
-          {subcategorias.data.map((s) => (
-            <Button
-              key={s.id}
-              variante={subcategoriaId === s.id ? 'primary' : 'secondary'}
-              aria-pressed={subcategoriaId === s.id}
-              onClick={() => setSubcategoriaId(s.id)}
-            >
-              {s.nombre}
-            </Button>
-          ))}
-        </div>
-      )}
+      <FiltrosCategoria
+        categoriaId={categoriaId}
+        subcategoriaId={subcategoriaId}
+        onCategoria={elegirCategoria}
+        onSubcategoria={setSubcategoriaId}
+      />
       <div className="chips" role="group" aria-label="Filtrar por estado">
         {ESTADOS.map((e) => (
           <Button

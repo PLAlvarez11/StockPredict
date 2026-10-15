@@ -13,7 +13,7 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: var(--fs-base);
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
@@ -30,10 +30,10 @@ h4 {
 }
 
 h1 {
-  font-size: 26px;
+  font-size: var(--fs-h1);
 }
 h2 {
-  font-size: 19px;
+  font-size: var(--fs-h2);
 }
 
 p {

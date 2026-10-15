@@ -1,12 +1,11 @@
 import { ImageSquare, PencilSimple, Sliders } from '@phosphor-icons/react';
-import { useState } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
+import { useAviso } from '../../components/layout/Avisos';
 import { ScreenHeader } from '../../components/layout/ScreenHeader';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { Field } from '../../components/ui/Field';
 import { ListSkeleton } from '../../components/ui/ListSkeleton';
-import { Notice } from '../../components/ui/Notice';
 import { Switch } from '../../components/ui/Switch';
 import { ApiError } from '../../lib/apiClient';
 import { useTitulo } from '../../lib/useTitulo';
@@ -25,13 +24,10 @@ function Compras({ id }: { id: number }) {
 }
 
 function Detalle({ producto }: { producto: Producto }) {
-  const estado = (useLocation().state ?? {}) as { aviso?: string };
-  const [aviso, setAviso] = useState<string | undefined>(estado.aviso);
-  const { pedirDesactivar, pedirActivar, dialogos } = useCambioEstado(setAviso);
+  const { pedirDesactivar, pedirActivar, dialogos } = useCambioEstado(useAviso());
 
   return (
     <div className="page" style={{ gap: 18 }}>
-      {aviso && <Notice>{aviso}</Notice>}
       <div className="detalle-cabecera">
         <div className="detalle-imagen" role="img" aria-label="Imagen del producto: próximamente">
           <ImageSquare size={30} aria-hidden="true" />

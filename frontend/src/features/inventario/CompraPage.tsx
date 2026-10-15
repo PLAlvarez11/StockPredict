@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
+import { useAviso } from '../../components/layout/Avisos';
 import { ScreenHeader } from '../../components/layout/ScreenHeader';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -32,6 +33,7 @@ type Valores = z.infer<typeof esquema>;
 
 function Formulario({ productos }: { productos: Producto[] }) {
   const navegar = useNavigate();
+  const avisar = useAviso();
   const cliente = useQueryClient();
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const preseleccion = useSearchParams()[0].get('productoId') ?? '';
@@ -66,7 +68,8 @@ function Formulario({ productos }: { productos: Producto[] }) {
         cliente.invalidateQueries({ queryKey: CLAVE_PRODUCTOS }),
         cliente.invalidateQueries({ queryKey: CLAVE_PREDICCION }),
       ]);
-      navegar('/inventario', { state: { aviso: 'Compra registrada correctamente' } });
+      avisar('Compra registrada correctamente');
+      navegar('/inventario');
     },
     onError: (error) =>
       setErrorGeneral(aplicarErroresServidor(error, setError, ['productoId', 'cantidad'])),

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
+import { useAviso } from '../../components/layout/Avisos';
 import { ScreenHeader } from '../../components/layout/ScreenHeader';
 import { Button } from '../../components/ui/Button';
 import { Dialog } from '../../components/ui/Dialog';
@@ -38,6 +39,7 @@ interface Pendiente {
 
 function Formulario({ productos }: { productos: Producto[] }) {
   const navegar = useNavigate();
+  const avisar = useAviso();
   const cliente = useQueryClient();
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [pendiente, setPendiente] = useState<Pendiente | null>(null);
@@ -67,7 +69,8 @@ function Formulario({ productos }: { productos: Producto[] }) {
         cliente.invalidateQueries({ queryKey: CLAVE_PRODUCTOS }),
         cliente.invalidateQueries({ queryKey: CLAVE_PREDICCION }),
       ]);
-      navegar('/inventario', { state: { aviso: 'Stock actualizado correctamente' } });
+      avisar('Stock actualizado correctamente');
+      navegar('/inventario');
     },
     onError: (error) => {
       setPendiente(null);

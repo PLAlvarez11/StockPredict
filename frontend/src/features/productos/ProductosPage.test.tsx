@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { simularApi } from '../../test/mockFetch';
+import { AvisosProvider } from '../../components/layout/Avisos';
 import { ProductosPage } from './ProductosPage';
 
 const producto = (id: number, nombre: string, estado: boolean) => ({
@@ -28,9 +29,11 @@ function montar() {
   const cliente = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={cliente}>
-      <MemoryRouter>
-        <ProductosPage />
-      </MemoryRouter>
+      <AvisosProvider>
+        <MemoryRouter>
+          <ProductosPage />
+        </MemoryRouter>
+      </AvisosProvider>
     </QueryClientProvider>,
   );
 }

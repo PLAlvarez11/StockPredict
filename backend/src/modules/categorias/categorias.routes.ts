@@ -19,15 +19,17 @@ categoriasRouter.use(requiereSesion);
 
 const usuario = (req: { usuarioId?: number }) => req.usuarioId as number;
 const idDe = (req: { params: unknown }) => (req.params as { id: number }).id;
-const listarQuery = z.object({ estado: filtroActivos }).strict();
+const listarQuery = z
+  .object({ estado: filtroActivos, q: z.string().trim().max(150).optional() })
+  .strict();
 
 categoriasRouter.get('/iconos', (_req, res) => {
   res.json(ICONOS_CATEGORIA);
 });
 
 categoriasRouter.get('/', validar({ query: listarQuery }), async (req, res) => {
-  const { estado } = req.query as unknown as { estado: FiltroActivos };
-  res.json(await servicio.listar(usuario(req), estado));
+  const { estado, q } = req.query as unknown as { estado: FiltroActivos; q?: string };
+  res.json(await servicio.listar(usuario(req), estado, q));
 });
 
 categoriasRouter.post('/', validar({ body: crearCategoriaSchema }), async (req, res) => {

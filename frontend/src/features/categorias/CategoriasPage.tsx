@@ -9,14 +9,17 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAviso } from '../../components/layout/Avisos';
 import { ScreenHeader } from '../../components/layout/ScreenHeader';
 import { Button } from '../../components/ui/Button';
+import { Buscador } from '../../components/ui/Buscador';
+import { SinResultados } from '../../components/ui/SinResultados';
+import { useBusqueda } from '../../lib/useBusqueda';
 import { Dialog } from '../../components/ui/Dialog';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { IconBadge } from '../../components/ui/IconBadge';
 import { ListSkeleton } from '../../components/ui/ListSkeleton';
-import { Notice } from '../../components/ui/Notice';
 import { ApiError } from '../../lib/apiClient';
 import { subcategoriasApi, type Subcategoria } from '../subcategorias/api';
 import { CLAVE_SUBCATEGORIAS, useSubcategorias } from '../subcategorias/hooks';
@@ -27,13 +30,14 @@ const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno
 
 interface PanelProps {
   id: string;
+  busqueda: string | undefined;
   categoria: Categoria;
   onDesactivar: (sub: Subcategoria) => void;
   onActivar: (sub: Subcategoria) => void;
 }
 
-function PanelSubcategorias({ id, categoria, onDesactivar, onActivar }: PanelProps) {
-  const subcategorias = useSubcategorias(categoria.id, 'todos');
+function PanelSubcategorias({ id, busqueda, categoria, onDesactivar, onActivar }: PanelProps) {
+  const subcategorias = useSubcategorias(categoria.id, 'todos', busqueda);
 
   let cuerpo;
   if (subcategorias.isPending) {
@@ -104,10 +108,11 @@ function PanelSubcategorias({ id, categoria, onDesactivar, onActivar }: PanelPro
 
 export function CategoriasPage() {
   const [inactivas, setInactivas] = useState(false);
-  const categorias = useCategorias(inactivas ? 'inactivos' : 'activos');
+  const busqueda = useBusqueda();
+  const categorias = useCategorias(inactivas ? 'inactivos' : 'activos', busqueda.consulta);
   const cliente = useQueryClient();
-  const estado = (useLocation().state ?? {}) as { aviso?: string; abrir?: number };
-  const [aviso, setAviso] = useState<string | undefined>(estado.aviso);
+  const estado = (useLocation().state ?? {}) as { abrir?: number };
+  const setAviso = useAviso();
   const [abiertas, setAbiertas] = useState<number[]>(
     estado.abrir === undefined ? [] : [estado.abrir],
   );
@@ -205,6 +210,8 @@ export function CategoriasPage() {
     contenido = <ListSkeleton />;
   } else if (categorias.isError) {
     contenido = <ErrorState onReintentar={() => void categorias.refetch()} />;
+  } else if (categorias.data.length === 0 && busqueda.activa) {
+    contenido = <SinResultados busqueda={busqueda.consulta} onLimpiar={busqueda.limpiar} />;
   } else if (categorias.data.length === 0) {
     contenido = inactivas ? (
       <EmptyState
@@ -227,7 +234,7 @@ export function CategoriasPage() {
     contenido = (
       <ul className="page" style={{ listStyle: 'none', margin: 0 }}>
         {categorias.data.map((c) => {
-          const abierta = abiertas.includes(c.id);
+          const abierta = busqueda.activa || abiertas.includes(c.id);
           const idPanel = `subcategorias-${c.id}`;
           return (
             <li
@@ -285,6 +292,7 @@ export function CategoriasPage() {
               {c.estado && abierta && (
                 <PanelSubcategorias
                   id={idPanel}
+                  busqueda={busqueda.consulta}
                   categoria={c}
                   onDesactivar={setSubCandidata}
                   onActivar={setSubAActivar}
@@ -300,6 +308,18 @@ export function CategoriasPage() {
   return (
     <>
       <ScreenHeader titulo="Categorías" accion={accion} />
+      <div className="page" style={{ paddingTop: 0, paddingBottom: 12 }}>
+        <Buscador
+          etiqueta="Buscar categoría o subcategoría"
+          valor={busqueda.texto}
+          onCambio={busqueda.setTexto}
+        />
+      </div>
+      <div className="sr-only" role="status" aria-live="polite">
+        {!categorias.isPending && busqueda.activa
+          ? `${categorias.data?.length ?? 0} categorías encontradas`
+          : ''}
+      </div>
       <div className="segmento" role="group" aria-label="Estado de las categorías">
         <Button
           variante={inactivas ? 'secondary' : 'primary'}
@@ -316,11 +336,6 @@ export function CategoriasPage() {
           Inactivas
         </Button>
       </div>
-      {aviso && (
-        <div className="page" style={{ paddingBottom: 12 }}>
-          <Notice>{aviso}</Notice>
-        </div>
-      )}
       {contenido}
 
       <Dialog

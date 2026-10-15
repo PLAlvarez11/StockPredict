@@ -34,14 +34,38 @@ export interface FiltrosProductos {
   categoriaId?: number | undefined;
   subcategoriaId?: number | undefined;
   estado?: FiltroEstado | undefined;
+  q?: string | undefined;
+}
+
+const LIMITE_PAGINA = 100;
+
+function rutaListado(filtros: FiltrosProductos, pagina: number): string {
+  const params = new URLSearchParams({
+    limit: String(LIMITE_PAGINA),
+    estado: filtros.estado ?? 'activos',
+  });
+  if (filtros.categoriaId !== undefined) params.set('categoriaId', String(filtros.categoriaId));
+  if (filtros.subcategoriaId !== undefined) {
+    params.set('subcategoriaId', String(filtros.subcategoriaId));
+  }
+  if (filtros.q) params.set('q', filtros.q);
+  params.set('page', String(pagina));
+  return `/productos?${params.toString()}`;
 }
 
 export const productosApi = {
-  listar: ({ categoriaId, subcategoriaId, estado = 'activos' }: FiltrosProductos = {}) =>
-    api<ListaProductos>(
-      'GET',
-      `/productos?limit=100&estado=${estado}${categoriaId === undefined ? '' : `&categoriaId=${categoriaId}`}${subcategoriaId === undefined ? '' : `&subcategoriaId=${subcategoriaId}`}`,
-    ),
+  listarPagina: (filtros: FiltrosProductos, pagina: number) =>
+    api<ListaProductos>('GET', rutaListado(filtros, pagina)),
+  listar: async (filtros: FiltrosProductos = {}) => {
+    const primera = await api<ListaProductos>('GET', rutaListado(filtros, 1));
+    const datos = [...primera.datos];
+    for (let pagina = 2; datos.length < primera.total; pagina += 1) {
+      const siguiente = await api<ListaProductos>('GET', rutaListado(filtros, pagina));
+      if (siguiente.datos.length === 0) break;
+      datos.push(...siguiente.datos);
+    }
+    return { ...primera, datos };
+  },
   obtener: (id: number) => api<Producto>('GET', `/productos/${id}`),
   crear: (datos: ProductoNuevo) => api<Producto>('POST', '/productos', datos),
   editar: (

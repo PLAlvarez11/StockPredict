@@ -146,7 +146,7 @@ describe('PrediccionPage v2', () => {
     });
     montar(<PrediccionPage />);
     await userEvent.click(await screen.findByRole('button', { name: /Ver cálculo/ }));
-    expect(screen.getByText('Respaldo por subcategoría')).toBeInTheDocument();
+    expect(screen.getByText('Promedio de su subcategoría')).toBeInTheDocument();
     expect(screen.getByText(/su subcategoría «Blusas» \(2 productos\)/)).toBeInTheDocument();
     expect(screen.getByText('× (1 + 10 %)')).toBeInTheDocument();
     expect(screen.getByText('10 %')).toBeInTheDocument();
@@ -156,7 +156,7 @@ describe('PrediccionPage v2', () => {
     simularApi({ ...base, 'GET /prediccion': respuesta([item('Blusa floral', 'rojo')]) });
     montar(<PrediccionPage />);
     await userEvent.click(await screen.findByRole('button', { name: /Ver cálculo/ }));
-    expect(screen.getByText('Historial propio')).toBeInTheDocument();
+    expect(screen.getByText('Sus propias ventas')).toBeInTheDocument();
     expect(screen.getByText('× (1 + 20 %)')).toBeInTheDocument();
   });
 
@@ -236,9 +236,7 @@ describe('PrediccionPage v2', () => {
   it('PR14: sin resultados dice que no encontró productos y deja quitar los filtros', async () => {
     simularApi({ ...base, 'GET /prediccion': { ...respuesta([], 0) } });
     montar(<PrediccionPage />);
-    expect(
-      await screen.findByText('No encontramos productos con esos filtros'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('No encontramos nada con esa búsqueda')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Quitar filtros' })).toBeInTheDocument();
   });
 });
@@ -287,7 +285,7 @@ describe('SimuladorPage', () => {
       }),
     );
     await userEvent.click(screen.getByRole('button', { name: 'Ver cálculo' }));
-    expect(screen.getByText('Respaldo por subcategoría')).toBeInTheDocument();
+    expect(screen.getByText('Promedio de su subcategoría')).toBeInTheDocument();
     expect(screen.getByText('× (1 + 10 %)')).toBeInTheDocument();
   });
 

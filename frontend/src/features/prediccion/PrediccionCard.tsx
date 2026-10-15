@@ -55,7 +55,7 @@ export function PrediccionCard({ item }: { item: ItemPrediccion }) {
           <div className="pred-cell-value">{item.stockActual}</div>
         </div>
         <div className="pred-cell">
-          <div className="pred-cell-label">Sugerido sem.</div>
+          <div className="pred-cell-label">Sugerido esta semana</div>
           <div className="pred-cell-value">{item.stockSugerido ?? '—'}</div>
         </div>
       </div>

@@ -19,10 +19,10 @@ export interface SubcategoriaNueva {
 }
 
 export const subcategoriasApi = {
-  listar: (categoriaId?: number, estado: FiltroEstado = 'activos') =>
+  listar: (categoriaId?: number, estado: FiltroEstado = 'activos', q?: string) =>
     api<Subcategoria[]>(
       'GET',
-      `/subcategorias?estado=${estado}${categoriaId === undefined ? '' : `&categoriaId=${categoriaId}`}`,
+      `/subcategorias?estado=${estado}${categoriaId === undefined ? '' : `&categoriaId=${categoriaId}`}${q ? `&q=${encodeURIComponent(q)}` : ''}`,
     ),
   crear: (datos: SubcategoriaNueva) => api<Subcategoria>('POST', '/subcategorias', datos),
   editar: (id: number, datos: { nombre?: string; icono?: string | null }) =>

@@ -4,6 +4,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
 import { router } from './app/router';
+import { AvisosProvider } from './components/layout/Avisos';
 import { CLAVE_SESION } from './features/auth/useSesion';
 import { ApiError } from './lib/apiClient';
 import './styles/tokens.css';
@@ -32,7 +33,9 @@ if (!raiz) throw new Error('No se encontró #root');
 createRoot(raiz).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <AvisosProvider>
+        <RouterProvider router={router} />
+      </AvisosProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

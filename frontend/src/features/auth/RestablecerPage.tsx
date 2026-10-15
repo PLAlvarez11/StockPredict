@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useAviso } from '../../components/layout/Avisos';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Field } from '../../components/ui/Field';
@@ -19,6 +20,7 @@ export function RestablecerPage() {
   const [params] = useSearchParams();
   const token = params.get('token') ?? '';
   const navegar = useNavigate();
+  const avisar = useAviso();
   const [vencido, setVencido] = useState(token.length === 0);
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
 
@@ -31,11 +33,10 @@ export function RestablecerPage() {
 
   const cambiar = useMutation({
     mutationFn: authApi.restablecer,
-    onSuccess: () =>
-      navegar('/login', {
-        replace: true,
-        state: { aviso: 'Contraseña actualizada correctamente' },
-      }),
+    onSuccess: () => {
+      avisar('Contraseña actualizada correctamente');
+      navegar('/login', { replace: true });
+    },
     onError: (error) => {
       if (error instanceof ApiError && error.code === 'TOKEN_INVALID') {
         setVencido(true);

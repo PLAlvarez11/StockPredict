@@ -20,8 +20,8 @@ const usuario = (req: { usuarioId?: number }) => req.usuarioId as number;
 const idDe = (req: { params: unknown }) => (req.params as { id: number }).id;
 
 subcategoriasRouter.get('/', validar({ query: listarSubcategoriasQuery }), async (req, res) => {
-  const { categoriaId, estado } = req.query as unknown as ListarSubcategoriasQuery;
-  res.json(await servicio.listar(usuario(req), { categoriaId, estado }));
+  const { categoriaId, estado, q } = req.query as unknown as ListarSubcategoriasQuery;
+  res.json(await servicio.listar(usuario(req), { categoriaId, estado, q }));
 });
 
 subcategoriasRouter.post('/', validar({ body: crearSubcategoriaSchema }), async (req, res) => {

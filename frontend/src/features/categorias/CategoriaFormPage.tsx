@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
+import { useAviso } from '../../components/layout/Avisos';
 import { ScreenHeader } from '../../components/layout/ScreenHeader';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -30,6 +31,7 @@ type Valores = z.infer<typeof esquema>;
 
 function Formulario({ id, inicial }: { id: number | null; inicial: Partial<Valores> }) {
   const navegar = useNavigate();
+  const avisar = useAviso();
   const cliente = useQueryClient();
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
 
@@ -46,7 +48,8 @@ function Formulario({ id, inicial }: { id: number | null; inicial: Partial<Valor
     onSuccess: async () => {
       await cliente.invalidateQueries({ queryKey: CLAVE_CATEGORIAS });
       await cliente.invalidateQueries({ queryKey: ['productos'] });
-      navegar('/categorias', { state: { aviso: 'Categoría guardada' } });
+      avisar('Categoría guardada');
+      navegar('/categorias');
     },
     onError: (error) =>
       setErrorGeneral(aplicarErroresServidor(error, setError, ['nombre', 'icono'])),
