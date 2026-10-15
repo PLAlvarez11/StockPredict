@@ -555,33 +555,116 @@ select.input {
   height: 40px;
 }
 
-.pred-hero {
+.pred-cabecera {
   flex: none;
-  padding: 22px var(--space-6) 24px;
-  color: var(--color-on-hero);
-  background:
-    radial-gradient(560px 240px at 88% -35%, rgba(244, 194, 194, 0.5), transparent 62%),
-    var(--color-hero);
+  padding: 22px var(--space-6) var(--space-5);
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-divider);
 }
-.pred-hero-titulo {
+.pred-cabecera-titulo {
   display: flex;
   align-items: center;
   gap: var(--space-3);
   margin-bottom: var(--space-2);
-  color: var(--color-powder);
+  color: var(--color-accent-text);
 }
-.pred-hero h1 {
+.pred-cabecera h1 {
   font-size: 20px;
-  color: var(--color-on-hero);
+  color: var(--color-text);
 }
-.pred-hero p {
-  max-width: 34ch;
+.pred-cabecera-resumen {
+  margin: 0 0 var(--space-4);
   font-size: 14px;
+  color: var(--color-muted);
 }
-.pred-hero .pred-hero-base {
-  margin-top: var(--space-2);
-  font-size: 12.5px;
-  color: var(--color-powder);
+.buscador {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.buscador svg {
+  position: absolute;
+  left: 14px;
+  color: var(--color-muted);
+  pointer-events: none;
+}
+.buscador .input {
+  padding-left: 42px;
+  background: var(--color-bg);
+}
+.chips-pred {
+  padding-top: var(--space-4);
+}
+.pred-cabecera + .chips {
+  padding-top: var(--space-4);
+}
+.chips + .chips,
+.chips + .page {
+  margin-top: calc(var(--space-2) * -1);
+}
+.punto {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 7px;
+  border-radius: 50%;
+}
+.punto-todos {
+  background: var(--color-muted);
+}
+.punto-rojo {
+  background: var(--color-danger-text);
+}
+.punto-ambar {
+  background: var(--color-warn-icon);
+}
+.punto-verde {
+  background: var(--color-ok-icon);
+}
+.pred-barra {
+  height: 9px;
+  overflow: hidden;
+  background: var(--color-surface);
+  border-radius: 99px;
+}
+.pred-barra > div {
+  height: 100%;
+  border-radius: 99px;
+}
+.pred-barra-rojo > div {
+  background: var(--color-danger-text);
+}
+.pred-barra-ambar > div {
+  background: var(--color-warn-icon);
+}
+.pred-barra-verde > div {
+  background: var(--color-ok-icon);
+}
+.notice-aviso {
+  background: var(--color-warn-bg);
+  border-color: var(--color-warn-border);
+  color: var(--color-warn-text);
+}
+.notice-aviso svg {
+  color: var(--color-warn-text);
+}
+.sim-resultado {
+  gap: var(--space-3);
+  background: var(--color-bg);
+}
+.sim-titulo {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.sim-valor {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 32px;
 }
 
 .pred-card {

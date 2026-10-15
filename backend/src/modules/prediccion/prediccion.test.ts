@@ -21,6 +21,17 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
+const productoNuevoEnSubcategoriaNueva = async (subcategoria: string, nombre: string) => {
+  const ropa = await prisma.categoria.findFirstOrThrow({ where: { nombre: 'Ropa', usuarioId } });
+  const sub = await prisma.subcategoria.create({
+    data: { usuarioId, categoriaId: ropa.id, nombre: subcategoria },
+  });
+  await prisma.producto.create({
+    data: { usuarioId, subcategoriaId: sub.id, nombre, stock: 2, creadoEn: AHORA },
+  });
+  return (await buscar(nombre)).item;
+};
+
 const buscar = async (nombre: string, ahora = AHORA) => {
   const resultado = await calcularPrediccion(usuarioId, ahora, ZONA);
   const item = resultado.items.find((i) => i.producto.nombre === nombre);
@@ -47,12 +58,12 @@ describe('predicción con el seed de la demo', () => {
     expect(item.stockSugerido).toBeLessThan(item.stockActual);
   });
 
-  it('PR02: producto nuevo de esta semana usa el promedio por producto de su categoría', async () => {
+  it('PR02: producto nuevo de esta semana usa primero el promedio de su subcategoría, con margen de 10 %', async () => {
     const { item } = await buscar('Blusa de lino');
-    expect(item.origen).toBe('categoria');
+    expect(item.origen).toBe('subcategoria');
     expect(item.estado).toBe('comprar');
-    expect(item.calculo?.productosBase).toBe(2);
-    expect(item.calculo).toMatchObject({ v1: 7, v2: 5.5, v3: 4.5 });
+    expect(item.calculo?.productosBase).toBe(1);
+    expect(item.calculo).toMatchObject({ v1: 8, v2: 6, v3: 5, margenPorCiento: 10 });
     expect(item.stockSugerido).toBe(9);
     expect(item.cantidadAComprar).toBe(5);
   });
@@ -79,17 +90,17 @@ describe('predicción con el seed de la demo', () => {
     expect(item.cantidadAComprar).toBe(3);
   });
 
-  it('ordena comprar (mayor cantidad primero), luego suficiente y por último sin historial', async () => {
+  it('PR08: ordena por necesidad porcentual, luego suficiente y por último sin historial', async () => {
     const { resultado } = await buscar('Blusa floral');
     const estados = resultado.items.map((i) => i.estado);
     expect(estados.lastIndexOf('comprar')).toBeLessThan(estados.indexOf('suficiente'));
     expect(estados.lastIndexOf('suficiente')).toBeLessThan(estados.indexOf('sin_historial'));
-    const cantidades = resultado.items
-      .filter((i) => i.estado === 'comprar')
-      .map((i) => i.cantidadAComprar ?? 0);
-    expect(cantidades).toEqual([...cantidades].sort((a, b) => b - a));
+    const comprar = resultado.items.filter((i) => i.estado === 'comprar');
+    const porcentajes = comprar.map((i) => i.necesidadPct ?? 0);
+    expect(porcentajes).toEqual([...porcentajes].sort((a, b) => b - a));
     expect(resultado.totalActivos).toBe(14);
-    expect(resultado.totalAComprar).toBe(cantidades.length);
+    expect(resultado.totalAComprar).toBe(comprar.length);
+    expect(resultado.totalFiltrados).toBe(14);
   });
 
   it('PR07: las ventas de la semana en curso no entran al cálculo', async () => {
@@ -109,30 +120,58 @@ describe('predicción con el seed de la demo', () => {
     expect(resultado.totalActivos).toBe(13);
     expect(item.calculo?.productosBase).toBe(1);
     expect(item.calculo).toMatchObject({ v1: 8, v2: 6, v3: 5 });
+    const faldas = await productoNuevoEnSubcategoriaNueva('Faldas', 'Falda larga');
+    expect(faldas.origen).toBe('categoria');
+    expect(faldas.calculo).toMatchObject({ productosBase: 1, v1: 8, v2: 6, v3: 5 });
   });
 
-  it('PR07: el producto desactivado (Chaleco, con muchas ventas) no aparece ni entra al promedio de su categoría; si se activa, sí cambia el resultado', async () => {
-    const sin = await buscar('Blusa de lino');
-    expect(sin.resultado.items.some((i) => i.producto.nombre.startsWith('Chaleco'))).toBe(false);
-    expect(sin.item.calculo?.productosBase).toBe(2);
+  it('PR07: el producto desactivado (Chaleco, con muchas ventas) no aparece ni entra a los promedios; si se activa, sí cambia el resultado', async () => {
+    const abrigos = await prisma.subcategoria.findFirstOrThrow({ where: { nombre: 'Abrigos' } });
+    const nuevo = async () => {
+      const ya = await prisma.producto.findFirst({ where: { nombre: 'Chaqueta nueva' } });
+      if (!ya) {
+        await prisma.producto.create({
+          data: {
+            usuarioId,
+            subcategoriaId: abrigos.id,
+            nombre: 'Chaqueta nueva',
+            stock: 1,
+            creadoEn: AHORA,
+          },
+        });
+      }
+      return (await buscar('Chaqueta nueva')).item;
+    };
+    const lino = await buscar('Blusa de lino');
+    expect(lino.resultado.items.some((i) => i.producto.nombre.startsWith('Chaleco'))).toBe(false);
+    expect(lino.item.calculo?.productosBase).toBe(1);
+    const sin = await nuevo();
+    expect(sin.origen).toBe('categoria');
 
     const chaleco = await prisma.producto.findFirstOrThrow({
       where: { nombre: { startsWith: 'Chaleco' } },
     });
     expect(chaleco.estado).toBe(false);
     await prisma.producto.update({ where: { id: chaleco.id }, data: { estado: true } });
-    const con = await buscar('Blusa de lino');
-    expect(con.item.calculo?.productosBase).toBe(3);
-    expect(con.item.stockSugerido).not.toBe(sin.item.stockSugerido);
-    expect(con.resultado.totalActivos).toBe(15);
+    const con = await nuevo();
+    expect(con.origen).toBe('subcategoria');
+    expect(con.calculo?.productosBase).toBe(1);
+    expect(con.stockSugerido).not.toBeNull();
+    expect((await buscar('Blusa de lino')).resultado.totalActivos).toBe(16);
   });
 
-  it('PR02: el respaldo promedia la categoría completa aunque los productos estén en subcategorías distintas', async () => {
-    const { item } = await buscar('Blusa de lino');
-    expect(item.producto.subcategoria.nombre).toBe('Blusas');
-    expect(item.producto.categoria.nombre).toBe('Ropa');
+  it('PR02: sin datos en la subcategoría el respaldo promedia la categoría completa, con margen de 10 %', async () => {
+    const item = await productoNuevoEnSubcategoriaNueva('Faldas', 'Falda larga');
     expect(item.origen).toBe('categoria');
-    expect(item.calculo).toMatchObject({ productosBase: 2, v1: 7, v2: 5.5, v3: 4.5 });
+    expect(item.producto.categoria.nombre).toBe('Ropa');
+    expect(item.calculo).toMatchObject({
+      productosBase: 2,
+      v1: 7,
+      v2: 5.5,
+      v3: 4.5,
+      margenPorCiento: 10,
+    });
+    expect(item.stockSugerido).toBe(8);
     const vestido = (await buscar('Vestido casual midi')).item;
     expect(vestido.producto.subcategoria).toMatchObject({ nombre: 'Vestidos', icono: 'dress' });
   });

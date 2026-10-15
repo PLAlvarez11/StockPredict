@@ -16,13 +16,13 @@ const mult = (x: Fraccion, y: Fraccion): Fraccion => ({ n: x.n * y.n, d: x.d * y
 const div = (x: Fraccion, y: Fraccion): Fraccion => ({ n: x.n * y.d, d: x.d * y.n });
 const techo = (x: Fraccion): bigint => (x.n + x.d - 1n) / x.d;
 
-function referencia(v1: number, v2: number, v3: number, divisor = 1): number {
+function referencia(v1: number, v2: number, v3: number, divisor = 1, margen = 20): number {
   const d = fr(divisor);
   const [a, b, c] = [div(fr(v1), d), div(fr(v2), d), div(fr(v3), d)];
   const pp = suma(suma(mult(a, fr(5, 10)), mult(b, fr(3, 10))), mult(c, fr(2, 10)));
   const factor = v2 === 0 ? fr(1) : div(fr(v1), fr(v2));
   const ajustado = suma(fr(1), mult(resta(factor, fr(1)), fr(1, 2)));
-  return Number(techo(mult(mult(pp, ajustado), suma(fr(1), fr(2, 10)))));
+  return Number(techo(mult(mult(pp, ajustado), suma(fr(1), fr(margen, 100)))));
 }
 
 describe('calcularPts', () => {
@@ -127,5 +127,55 @@ describe('cantidadAComprar', () => {
   it('es cero cuando el stock iguala o supera al sugerido', () => {
     expect(cantidadAComprar(10, 10)).toBe(0);
     expect(cantidadAComprar(10, 15)).toBe(0);
+  });
+});
+
+describe('PTS v1.1: margen de seguridad según el origen del cálculo', () => {
+  it('PR09: sin indicar margen se usa 20 % y el resultado informa el margen usado', () => {
+    const r = calcularPts({ v1: 8, v2: 6, v3: 5 });
+    expect(r.margenPorCiento).toBe(20);
+    expect(r.margen).toBe(0.2);
+    expect(r.stockSugerido).toBe(10);
+    expect(calcularPts({ v1: 8, v2: 6, v3: 5, margenPorCiento: 20 })).toEqual(r);
+  });
+
+  it('PR09: Blusa floral (8, 6, 5) con 20 % da sugerido 10 y comprar 7; con 10 % da 9', () => {
+    const propio = calcularPts({ v1: 8, v2: 6, v3: 5, margenPorCiento: 20 });
+    expect(propio.stockSugerido).toBe(10);
+    expect(cantidadAComprar(propio.stockSugerido, 3)).toBe(7);
+    const respaldo = calcularPts({ v1: 8, v2: 6, v3: 5, margenPorCiento: 10 });
+    expect(respaldo.margenPorCiento).toBe(10);
+    expect(respaldo.margen).toBe(0.1);
+    expect(respaldo.stockSugerido).toBe(9);
+  });
+
+  it('PR09: el margen de 10 % es más prudente: nunca supera al de 20 %', () => {
+    for (let v1 = 0; v1 <= 12; v1 += 1) {
+      for (let v2 = 0; v2 <= 12; v2 += 1) {
+        const chico = calcularPts({ v1, v2, v3: 4, margenPorCiento: 10 }).stockSugerido;
+        const grande = calcularPts({ v1, v2, v3: 4, margenPorCiento: 20 }).stockSugerido;
+        expect(chico).toBeLessThanOrEqual(grande);
+      }
+    }
+  });
+
+  it('PR09: con margen de 10 % coincide con la referencia racional, con y sin divisor', () => {
+    for (const divisor of [1, 2, 3, 5]) {
+      for (let v1 = 0; v1 <= 12; v1 += 1) {
+        for (let v2 = 0; v2 <= 12; v2 += 1) {
+          for (let v3 = 0; v3 <= 12; v3 += 3) {
+            expect(
+              calcularPts({ v1, v2, v3, divisor, margenPorCiento: 10 }).stockSugerido,
+              `${v1}/${v2}/${v3}÷${divisor}`,
+            ).toBe(referencia(v1, v2, v3, divisor, 10));
+          }
+        }
+      }
+    }
+  });
+
+  it('PR09: rechaza un margen negativo o decimal', () => {
+    expect(() => calcularPts({ v1: 1, v2: 1, v3: 1, margenPorCiento: -1 })).toThrow(RangeError);
+    expect(() => calcularPts({ v1: 1, v2: 1, v3: 1, margenPorCiento: 7.5 })).toThrow(RangeError);
   });
 });

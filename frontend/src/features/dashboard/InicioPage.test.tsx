@@ -72,6 +72,7 @@ describe('InicioPage', () => {
       '/categorias/nueva',
       '/inventario/compra',
       '/inventario/ajuste',
+      '/simulador',
     ]);
     const pestanas = ['/', '/categorias', '/productos', '/inventario', '/prediccion'];
     for (const ruta of rutas) expect(pestanas).not.toContain(ruta);

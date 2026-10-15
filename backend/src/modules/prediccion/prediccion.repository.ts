@@ -17,6 +17,18 @@ export const prediccionRepository = {
       },
     }),
 
+  categoriaActiva: (id: number, usuarioId: number) =>
+    prisma.categoria.findFirst({
+      where: { id, usuarioId, estado: true },
+      select: { id: true, nombre: true },
+    }),
+
+  subcategoriaActiva: (id: number, categoriaId: number, usuarioId: number) =>
+    prisma.subcategoria.findFirst({
+      where: { id, categoriaId, usuarioId, estado: true },
+      select: { id: true, nombre: true },
+    }),
+
   ventasEntre: (productoIds: number[], desde: Date, hasta: Date) =>
     prisma.venta.findMany({
       where: { productoId: { in: productoIds }, fecha: { gte: desde, lt: hasta } },

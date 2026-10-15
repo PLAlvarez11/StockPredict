@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  Calculator,
   CheckCircle,
   FolderSimplePlus,
   Package,
@@ -28,6 +29,7 @@ const ATAJOS = [
   { ruta: '/categorias/nueva', etiqueta: 'Crear categoría', Icono: FolderSimplePlus },
   { ruta: '/inventario/compra', etiqueta: 'Registrar compra', Icono: Package },
   { ruta: '/inventario/ajuste', etiqueta: 'Ajustar stock', Icono: Sliders },
+  { ruta: '/simulador', etiqueta: 'Simular stock', Icono: Calculator },
 ] as const;
 
 function Resumen() {
@@ -68,7 +70,7 @@ function Resumen() {
 function PorComprar() {
   const prediccion = useQuery({
     queryKey: CLAVE_PREDICCION,
-    queryFn: prediccionApi.obtener,
+    queryFn: () => prediccionApi.obtener(),
     staleTime: 0,
   });
   const datos = prediccion.data;

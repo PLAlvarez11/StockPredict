@@ -3,6 +3,7 @@ export interface EntradaPts {
   v2: number;
   v3: number;
   divisor?: number;
+  margenPorCiento?: number;
 }
 
 export interface ResultadoPts {
@@ -14,6 +15,7 @@ export interface ResultadoPts {
   factorAjustado: number;
   stockAjustado: number;
   margen: number;
+  margenPorCiento: number;
   stockSugerido: number;
 }
 
@@ -21,14 +23,21 @@ export const PESO_V1 = 0.5;
 export const PESO_V2 = 0.3;
 export const PESO_V3 = 0.2;
 export const SENSIBILIDAD = 0.5;
-export const MARGEN_SEGURIDAD = 0.2;
+export const MARGEN_PROPIO_PCT = 20;
+export const MARGEN_RESPALDO_PCT = 10;
 
 function dividirHaciaArriba(numerador: bigint, denominador: bigint): bigint {
   return (numerador + denominador - 1n) / denominador;
 }
 
-export function calcularPts({ v1, v2, v3, divisor = 1 }: EntradaPts): ResultadoPts {
-  for (const valor of [v1, v2, v3, divisor]) {
+export function calcularPts({
+  v1,
+  v2,
+  v3,
+  divisor = 1,
+  margenPorCiento = MARGEN_PROPIO_PCT,
+}: EntradaPts): ResultadoPts {
+  for (const valor of [v1, v2, v3, divisor, margenPorCiento]) {
     if (!Number.isInteger(valor) || valor < 0) {
       throw new RangeError('Las ventas deben ser enteros no negativos');
     }
@@ -39,11 +48,12 @@ export function calcularPts({ v1, v2, v3, divisor = 1 }: EntradaPts): ResultadoP
   const b = BigInt(v2);
   const c = BigInt(v3);
   const n = BigInt(divisor);
+  const m = BigInt(margenPorCiento);
 
   const sugerido =
     b === 0n
-      ? dividirHaciaArriba(6n * (5n * a + 2n * c), 50n * n)
-      : dividirHaciaArriba(6n * (5n * a + 3n * b + 2n * c) * (a + b), 100n * n * b);
+      ? dividirHaciaArriba((5n * a + 2n * c) * (100n + m), 1000n * n)
+      : dividirHaciaArriba((5n * a + 3n * b + 2n * c) * (a + b) * (100n + m), 2000n * n * b);
 
   const e1 = v1 / divisor;
   const e2 = v2 / divisor;
@@ -60,7 +70,8 @@ export function calcularPts({ v1, v2, v3, divisor = 1 }: EntradaPts): ResultadoP
     factorTendencia,
     factorAjustado,
     stockAjustado: ponderado * factorAjustado,
-    margen: MARGEN_SEGURIDAD,
+    margen: margenPorCiento / 100,
+    margenPorCiento,
     stockSugerido: Number(sugerido),
   };
 }

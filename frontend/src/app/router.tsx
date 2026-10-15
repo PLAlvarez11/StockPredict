@@ -16,6 +16,7 @@ import { CompraPage } from '../features/inventario/CompraPage';
 import { InventarioPage } from '../features/inventario/InventarioPage';
 import { VentaPage } from '../features/ventas/VentaPage';
 import { PrediccionPage } from '../features/prediccion/PrediccionPage';
+import { SimuladorPage } from '../features/prediccion/SimuladorPage';
 import { RutaPrivada, RutaPublica } from './guards';
 
 export const router = createBrowserRouter([
@@ -56,6 +57,7 @@ export const router = createBrowserRouter([
           { path: 'inventario/ajuste', element: <AjustePage /> },
           { path: 'ventas/nueva', element: <VentaPage /> },
           { path: 'prediccion', element: <PrediccionPage /> },
+          { path: 'simulador', element: <SimuladorPage /> },
         ],
       },
     ],
