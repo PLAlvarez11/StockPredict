@@ -11,3 +11,7 @@ export function coincideBusqueda(busqueda: string | undefined, ...textos: string
   if (q === '') return true;
   return textos.some((t) => normalizarTexto(t).includes(q));
 }
+
+export function neutralizarFormula(texto: string): string {
+  return /^[=+\-@\t\r]/.test(texto) ? `'${texto}` : texto;
+}

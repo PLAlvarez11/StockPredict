@@ -109,15 +109,15 @@ afterEach(() => {
 });
 
 describe('PrediccionPage v2', () => {
-  it('PR16: el encabezado muestra cuántos productos reabastecer y la semana, y el botón de exportar está deshabilitado', async () => {
+  it('PR16: el encabezado muestra cuántos productos reabastecer y la semana, y el botón de exportar ya no dice "Próximamente"', async () => {
     simularApi({ ...base, 'GET /prediccion': completa });
     montar(<PrediccionPage />);
     expect(await screen.findByText(/1 de 3 productos para reabastecer/)).toHaveTextContent(
       'semana del 12 oct al 18 oct',
     );
     const exportar = screen.getByRole('button', { name: /Compartir \/ exportar lista/ });
-    expect(exportar).toBeDisabled();
-    expect(exportar).toHaveTextContent('Próximamente');
+    expect(exportar).toBeEnabled();
+    expect(exportar).not.toHaveTextContent('Próximamente');
   });
 
   it('PR13: cada tarjeta muestra el porcentaje con una barra, y se respeta el orden del servidor', async () => {

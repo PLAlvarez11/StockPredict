@@ -1,8 +1,11 @@
 import { Router } from 'express';
 import { requiereSesion } from '../../shared/http/requiere-sesion.js';
 import { validar } from '../../shared/http/validate.js';
+import { exportarPrediccion } from './exportacion/exportar.js';
 import {
+  exportarPrediccionQuery,
   filtrosPrediccionQuery,
+  type ExportarQuery,
   simulacionSchema,
   type FiltrosPrediccion,
   type SimulacionInput,
@@ -22,6 +25,17 @@ prediccionRouter.get('/', validar({ query: filtrosPrediccionQuery }), async (req
       req.query as unknown as FiltrosPrediccion,
     ),
   );
+});
+
+prediccionRouter.get('/exportar', validar({ query: exportarPrediccionQuery }), async (req, res) => {
+  const archivo = await exportarPrediccion(
+    req.usuarioId as number,
+    req.query as unknown as ExportarQuery,
+  );
+  res.setHeader('Content-Type', archivo.tipo);
+  res.setHeader('Content-Disposition', `attachment; filename="${archivo.nombre}"`);
+  res.setHeader('Cache-Control', 'no-store');
+  res.send(archivo.contenido);
 });
 
 prediccionRouter.post('/simulacion', validar({ body: simulacionSchema }), async (req, res) => {

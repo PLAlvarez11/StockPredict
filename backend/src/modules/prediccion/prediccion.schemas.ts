@@ -10,6 +10,13 @@ export const filtrosPrediccionQuery = z
   })
   .strict();
 
+export const exportarPrediccionQuery = z
+  .object({
+    ...filtrosPrediccionQuery.shape,
+    formato: z.enum(['csv', 'xlsx', 'pdf'], { error: 'Elige un formato: csv, xlsx o pdf.' }),
+  })
+  .strict();
+
 export const simulacionSchema = z
   .object({
     categoriaId: z
@@ -37,4 +44,5 @@ export const simulacionSchema = z
   .strict();
 
 export type FiltrosPrediccion = z.infer<typeof filtrosPrediccionQuery>;
+export type ExportarQuery = z.infer<typeof exportarPrediccionQuery>;
 export type SimulacionInput = z.infer<typeof simulacionSchema>;

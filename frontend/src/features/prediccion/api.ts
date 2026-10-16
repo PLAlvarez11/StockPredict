@@ -73,7 +73,7 @@ export interface Simulacion {
   calculo: CalculoDetalle | null;
 }
 
-function consulta(filtros: FiltrosPrediccion): string {
+export function consulta(filtros: FiltrosPrediccion): string {
   const params = new URLSearchParams();
   if (filtros.q) params.set('q', filtros.q);
   if (filtros.categoriaId !== undefined) params.set('categoriaId', String(filtros.categoriaId));
@@ -84,6 +84,8 @@ function consulta(filtros: FiltrosPrediccion): string {
   const texto = params.toString();
   return texto === '' ? '' : `?${texto}`;
 }
+
+export type FormatoExportacion = 'pdf' | 'xlsx' | 'csv';
 
 export const prediccionApi = {
   obtener: (filtros: FiltrosPrediccion = {}) =>

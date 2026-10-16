@@ -1,6 +1,6 @@
 import { ChartLineUp, Export, ShoppingBag } from '@phosphor-icons/react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Buscador } from '../../components/ui/Buscador';
@@ -32,9 +32,12 @@ const LEYENDA: { id: Exclude<FiltroSemaforo, 'todos'>; texto: string }[] = [
   { id: 'neutro', texto: 'Sin historial: faltan ventas para sugerir' },
 ];
 
+const ExportarHoja = lazy(() => import('./ExportarHoja'));
+
 export function PrediccionPage() {
   useTitulo('Predicción de compra');
   const busqueda = useBusqueda();
+  const [exportando, setExportando] = useState(false);
   const [categoriaId, setCategoriaId] = useState<number | undefined>(undefined);
   const [subcategoriaId, setSubcategoriaId] = useState<number | undefined>(undefined);
   const [estado, setEstado] = useState<FiltroSemaforo>('todos');
@@ -146,18 +149,24 @@ export function PrediccionPage() {
         ))}
       </ul>
       <div className="page" style={{ paddingBottom: 0 }}>
-        <Button bloque disabled aria-describedby="exportar-pronto">
+        <Button bloque aria-haspopup="dialog" onClick={() => setExportando(true)}>
           <Export size={18} aria-hidden="true" />
           Compartir / exportar lista
-          <span id="exportar-pronto" className="tag tag-neutral">
-            Próximamente
-          </span>
         </Button>
       </div>
       <div aria-live="polite" className="sr-only">
         {datos && hayFiltro ? `${datos.totalFiltrados} productos encontrados` : ''}
       </div>
       {contenido}
+      {exportando && (
+        <Suspense fallback={null}>
+          <ExportarHoja
+            abierto={exportando}
+            filtros={filtros}
+            onCerrar={() => setExportando(false)}
+          />
+        </Suspense>
+      )}
     </>
   );
 }

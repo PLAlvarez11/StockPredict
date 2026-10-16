@@ -27,7 +27,7 @@ export class ApiError extends Error {
   }
 }
 
-interface Problema {
+export interface Problema {
   code?: string;
   detail?: string;
   title?: string;
