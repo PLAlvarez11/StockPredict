@@ -1,0 +1,225 @@
+\documentclass[12pt,letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{mathptmx}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{url}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+\setlength{\emergencystretch}{3em}
+\titleformat{\section}{\normalfont\bfseries\large}{}{0pt}{}
+\titlespacing*{\section}{0pt}{12pt}{4pt}
+\titleformat{\subsection}{\normalfont\bfseries}{}{0pt}{}
+\titlespacing*{\subsection}{0pt}{8pt}{2pt}
+\captionsetup{font=small,labelfont=bf,justification=centering}
+\setlist{nosep,leftmargin=1.5em}
+
+\newcommand{\fechapresentacion}{23 de octubre 2026}
+
+\newcommand{\captura}[3][0.8]{%
+\begin{figure}[H]
+\centering
+\IfFileExists{#2}{%
+\includegraphics[width=#1\textwidth]{#2}%
+}{%
+\fbox{\parbox[c][5cm][c]{#1\textwidth}{\centering\footnotesize Insertar captura\\\texttt{\detokenize{#2}}}}%
+}
+\caption{#3}
+\end{figure}}
+
+\begin{document}
+
+\begin{center}
+{\Large\bfseries StockPredict: versión beta del sistema de información}\\[8pt]
+Pedro Luis Alvarez Gonzalez\\
+7690 22 5839\\
+Universidad Mariano Gálvez de Guatemala\\
+\fechapresentacion
+\end{center}
+
+\section{Datos generales}
+
+\textbf{Nombre del proyecto:} Sistema de control y predicción de stock basado en ventas.\\
+\textbf{Nombre de la aplicación:} StockPredict.\\
+\textbf{Versión presentada:} beta, etiquetada como v1.0-beta.\\
+\textbf{Fecha de presentación:} \fechapresentacion.
+
+
+\section{Video:} https://youtu.be/zj8J5w2noG8\\
+\section{Presentacion:} https://canva.link/ak29j188h82mngs\\
+
+\section{Tipo de sistema de información}
+
+StockPredict es un sistema de información transaccional con apoyo a la decisión. Es transaccional porque registra el trabajo del día a día, que son las ventas, las compras y los ajustes de stock. Y es de apoyo a la decisión porque con esos datos calcula cuánto conviene comprar de cada producto, usando una fórmula propia llamada PTS.
+
+No es un sistema de inventario completo ni un punto de venta. Es una aplicación web pensada para usarse desde el celular, con una sola usuaria por ahora. Esa usuaria es la dueña del negocio, que es quien decide cuánto pedirle al proveedor cada semana.
+
+\section{Objetivo}
+
+El objetivo general es que las dueñas de ventas en linea por redes solciales, ya no decidan sus compras a puro ojo y tenga un número que salga de lo que de verdad se ha vendido.
+
+Para lograrlo, el sistema tiene tres objetivos más pequeños:
+
+\begin{itemize}
+\item Llevar el registro ordenado de categorías, subcategorías, productos, ventas y compras.
+\item Calcular para cada producto activo cuántas unidades conviene tener la próxima semana y cuántas faltan comprar.
+\item Mostrar ese resultado de forma clara, con colores y con el cálculo a la vista, para que la usuaria entienda de dónde sale cada número.
+\end{itemize}
+
+\section{El problema que resuelve}
+
+El proyecto parte del negocio de una emprendedora que vende ropa de Shein, ropa de segunda mano, maquillaje, perfumes y bolsos. Todo lo anota en una libreta y a la hora de pedir al proveedor decide a memoria. Eso le trae dos problemas que se repiten. Si compra de menos, se queda sin producto que sí se vende y pierde clientas. Si compra de más, le queda producto parado y dinero detenido.
+
+\section{Tecnologías utilizadas}
+
+La interfaz está hecha con React, Vite y TypeScript, con un diseño mobile first que se revisó a 390 por 844 píxeles. El servidor usa Node.js 24 con Express y TypeScript, y expone una API REST. Los datos se guardan en PostgreSQL 17 y se manejan con Prisma 7.10.1, que también se encarga de las migraciones.
+
+La base de datos y Mailpit, que sirve para probar los correos de recuperación de contraseña, corren en contenedores con Docker Compose. Los archivos de exportación se generan en el servidor con pdfkit para el PDF y write-excel-file para el Excel.
+
+Para la seguridad, la sesión viaja en una cookie protegida que el navegador no deja leer desde el código de la página. Las contraseñas se guardan con bcrypt, el inicio de sesión tiene un límite de intentos fallidos y el servidor revisa de dónde vienen las peticiones que modifican datos.
+
+Las pruebas se hicieron con Vitest para el código, con Lighthouse y axe para la accesibilidad y con mediciones propias para los tiempos de respuesta. El código se versiona con Git y GitHub.
+
+\section{Funcionalidades de la versión beta}
+
+Estas son las funcionalidades que ya están construidas y probadas:
+
+\begin{itemize}
+\item Registro de usuario, inicio de sesión y recuperación de contraseña por correo.
+\item Categorías y subcategorías con ícono, que se pueden desactivar y volver a activar.
+\item Productos con descripción, categoría y subcategoría, con la opción de activarlos o desactivarlos.
+\item Buscador y filtros en las listas, sin importar tildes ni mayúsculas.
+\item Registro de ventas, que no deja vender más unidades de las que hay en stock.
+\item Registro de compras y ajuste manual de stock, con confirmación antes de guardar.
+\item Predicción de compra con la fórmula PTS, con semáforo de urgencia, porcentaje de necesidad y la opción Ver cálculo.
+\item Simulador de stock para un producto nuevo, que calcula sin guardar nada.
+\item Detalle de cada producto con una gráfica de las compras por semana.
+\item Inicio con atajos rápidos y una gráfica de las ventas de la semana.
+\item Exportación de la lista de predicción en PDF, Excel y CSV.
+\end{itemize}
+
+Todavía no están el historial de compras con precio pagado, los precios de venta, las fotos de los productos, las notificaciones ni el catálogo. Eso queda para las siguientes versiones.
+
+\section{La fórmula PTS}
+
+PTS significa Ponderación, Tendencia y Seguridad. Funciona en cuatro pasos:
+
+\begin{enumerate}
+\item Saca un promedio de las ventas de las últimas tres semanas cerradas, de lunes a domingo, donde la semana más reciente pesa 50~\%, la anterior 30~\% y la más vieja 20~\%.
+\item Mide si las ventas van subiendo o bajando comparando la última semana contra la anterior, y suaviza ese efecto a la mitad para que no se dispare.
+\item Le agrega un margen de seguridad de 20~\% y redondea hacia arriba, porque no se compran medias unidades.
+\item Le resta el stock actual. Lo que queda es la cantidad a comprar.
+\end{enumerate}
+
+Un ejemplo con los datos de Blusa floral. Las ventas de las últimas tres semanas fueron 5, 6 y 8, siendo 8 la más reciente. El promedio ponderado es 6.8. La tendencia es 8 entre 6, que da 1.3333, y al suavizarla a la mitad queda en 1.1667. Al multiplicar 6.8 por 1.1667 resulta 7.93. Con el margen de 20~\% sube a 9.52 y al redondear hacia arriba queda en 10. Como en la bodega hay 3 unidades, el sistema indica comprar 7.
+
+Cuando un producto es nuevo y no tiene tres semanas de historial, el sistema usa el promedio de los productos de su misma subcategoría. Si no hay datos ahí, usa el de la categoría. En esos casos el margen baja de 20~\% a 10~\%, para que la estimación sea más prudente. Si tampoco hay datos en la categoría, muestra el aviso Sin historial suficiente y no inventa un número.
+
+Los cálculos se hacen con números enteros. Con decimales la computadora da cosas como 12.000000000000002 en vez de 12, y al redondear hacia arriba eso se volvería 13.
+
+\section{Resultados de las pruebas}
+
+Los resultados se juntaron en un dashboard, que es un panel con gráficos e indicadores y que se abre sin internet. Los números salen de las pruebas reales y se pueden volver a generar con un solo comando. Fueron tomados el 21 y 22 de octubre de 2026 sobre la versión beta.
+
+\subsection{Pruebas automáticas}
+
+Pasan 328 de 328 pruebas. De ellas, 236 son del servidor y 92 de la interfaz. Por módulo son 28 de autenticación, 32 de categorías y subcategorías, 94 de productos y búsqueda, 16 de ventas, 9 de compras, 8 de ajuste, 74 de predicción y PTS, 14 del simulador, 27 de exportación, 12 de inicio y avisos y 14 de base de datos y configuración. Además, 38 pruebas son de seguridad y también pasan todas.
+
+\captura{capturas/dash-pruebas.png}{Dashboard de pruebas. Muestra las 328 pruebas aprobadas y su reparto por módulo.}
+
+\subsection{Cobertura del código}
+
+La cobertura dice cuánto del código se ejecuta cuando corren las pruebas. En el servidor las líneas cubiertas son 95.1~\%, las sentencias 93.3~\%, las funciones 95.9~\% y las ramas 86.2~\%. En la interfaz las líneas son 70.9~\%, las sentencias 69.9~\%, las funciones 64.5~\% y las ramas 73.9~\%. La interfaz tiene menos cobertura y es un punto a mejorar.
+
+\captura{capturas/dash-cobertura.png}{Cobertura de código del servidor y de la interfaz.}
+
+\subsection{Accesibilidad}
+
+Se revisaron 15 pantallas a 390 por 844 píxeles. Lighthouse dio 100 de accesibilidad en todas y axe encontró 0 violaciones. En buenas prácticas, Lighthouse dio 100 en 12 pantallas y 96 en inicio de sesión, registro y recuperar contraseña.
+
+\captura{capturas/dash-accesibilidad.png}{Puntajes de accesibilidad y buenas prácticas por pantalla.}
+
+\subsection{Rendimiento}
+
+Con los 14 productos de la demostración, la predicción responde en una mediana de 15.4 milisegundos y el 95~\% de las respuestas tarda 23.5 milisegundos o menos. Con 200 productos la mediana es 30.3 milisegundos y el 95~\% tarda 45.1 milisegundos o menos. El JavaScript inicial pesa 664.4 KB sin comprimir y 191.6 KB comprimido con gzip.
+
+\captura{capturas/dash-rendimiento.png}{Tiempos de respuesta de la predicción y peso del JavaScript.}
+
+\subsection{Seguridad y dependencias}
+
+La revisión de dependencias con npm audit dio 0 vulnerabilidades en 624 paquetes.
+
+\subsection{Requerimientos y decisiones de diseño}
+
+Los 56 requerimientos funcionales están construidos y cada uno tiene al menos una prueba que pasa. De los 22 requerimientos no funcionales, 20 están cumplidos o medidos y quedan pendientes el de la prueba con la usuaria final y el de la interfaz simple. Las decisiones técnicas están registradas en 39 documentos de decisión. De ellos, 14 están implementados, 8 son parciales y 17 quedaron diferidos para el futuro.
+
+\captura{capturas/dash-requerimientos.png}{Estado de los requerimientos y de las decisiones de diseño.}
+
+\subsection{Prueba de la fórmula PTS contra comprar a ojo}
+
+Esta prueba mira hacia atrás. Para cada producto se calculó qué habría sugerido PTS y se comparó con lo que de verdad se vendió esa semana. Se comparó contra un método a ojo, que consiste en repetir lo que se vendió la semana anterior.
+
+PTS alcanzó para cubrir la venta en 10 de 12 casos, que es el 83.3~\%. Comprar a ojo alcanzó en 6 de 12, o sea el 50~\%. Con PTS faltaron 5 unidades y con el método a ojo faltaron 11. Lo que salió peor para PTS es que sobraron 14 unidades contra 5 del método a ojo. Eso es de esperarse por la reserva extra de 20~\%. PTS también se quedó corto en dos productos, Blusa floral y Collar dorado charm. No hubo ningún caso en que el método a ojo cubriera la venta y PTS no.
+
+Un detalle importante es que estos son datos de demostración y la muestra es de apenas 12 casos. Por eso sirve como ejemplo del método, pero no prueba que PTS funcione con el negocio real. Para eso el script ya está listo para correr con las ventas reales de la usuaria.
+
+\captura{capturas/dash-retrospectiva.png}{Comparación entre PTS y comprar a ojo, con datos de demostración.}
+
+\section{Problemas encontrados en las pruebas y cómo se solventaron}
+
+\subsection{Los decimales de la computadora}
+
+Al multiplicar 10 por 1.2 la computadora da 12.000000000000002. Al redondear hacia arriba eso se convertía en 13 y la compra salía equivocada. Se solventó haciendo todo el cálculo de PTS con números enteros y usando decimales solo para mostrar el desglose en pantalla.
+
+\subsection{La recuperación de contraseña delataba los correos}
+
+Si el correo existía, el servidor hacía más trabajo y tardaba más en responder que cuando no existía. Con esa diferencia se podía adivinar qué correos están registrados. Se solventó respondiendo de inmediato lo mismo en los dos casos y haciendo el trabajo real en segundo plano. Una prueba retrasa la base de datos 400 milisegundos y comprueba que la respuesta sigue llegando en menos de 300.
+
+\subsection{Fallas de accesibilidad que las herramientas no vieron}
+
+Lighthouse y axe dieron bien, pero la revisión a mano encontró tres problemas. El título de la pestaña era siempre el mismo, el foco no se movía al cambiar de pantalla y el scroll se quedaba donde estaba. También se halló una tabla oculta de una gráfica que ensanchaba la página y un contenedor de más en una lista, que bajaba Lighthouse a 92. Todo se corrigió y se volvió a medir.
+
+\subsection{Una prueba que falló una sola vez}
+
+Una prueba del servidor venció por tiempo después de 192 segundos. Se revisó y coincidió con el momento en que la computadora entró en suspensión, y al repetirla pasó. Se agregó un vigilante que anota en el registro del servidor cuando el proceso se detiene o cuando una respuesta tarda dos segundos o más, para poder distinguir entre una suspensión y una consulta lenta. Una respuesta de casi 20 segundos que apareció antes en otra medición no se pudo confirmar y quedó anotada como pendiente.
+
+\subsection{Dependencias con vulnerabilidades}
+
+Al revisar las dependencias aparecieron 4 vulnerabilidades altas dentro de Prisma 7.10.0. Se comprobó que la aplicación no usa esas partes, y aun así se subió a la versión 7.10.1. Después de eso las pruebas siguieron pasando y npm audit quedó en 0.
+
+\subsection{Un puerto ocupado}
+
+Al levantar la aplicación, el puerto 3000 lo tenía otro programa que corría en un contenedor y la interfaz mostraba un error de conexión. Se solventó deteniendo ese contenedor. Para las mediciones, el servidor se levanta en otros puertos para que no choque.
+
+\section{Caso de uso de la demostración}
+
+El caso de uso se llama Lunes de compras. Es el momento en que la dueña del negocio revisa qué le conviene pedir al proveedor.
+
+\begin{enumerate}
+\item Inicia sesión y ve el Inicio con el saludo, los atajos y la gráfica de ventas de la semana.
+\item Registra la venta de 1 unidad de Blusa floral. Si intenta vender más de lo que hay en stock, el sistema no la deja y avisa cuántas unidades quedan.
+\item Entra a Predicción. Blusa floral tenía que comprar 7 y ahora debe comprar 8, porque el stock bajó y el sugerido sigue en 10.
+\item Abre Ver cálculo y revisa el paso a paso de dónde salió ese número.
+\item Usa el simulador para un producto nuevo y ve cuánto stock necesitaría según su categoría, sin guardar nada.
+\item Exporta la lista de predicción en PDF para llevarla al proveedor.
+\end{enumerate}
+
+\captura[0.3]{capturas/demo-prediccion.png}{Pantalla Predicción de compra con el semáforo y el porcentaje de necesidad.}
+
+\captura[0.3]{capturas/demo-ver-calculo.png}{Detalle Ver cálculo de Blusa floral.}
+
+
+\section{Limitaciones y siguientes pasos}
+
+Hay cosas que no se pudieron medir en esta ronda. No se probó con la usuaria final, no se midió con una red móvil, no se probó con un lector de pantalla ni en un celular real y el menú de compartir del teléfono no se pudo probar porque necesita que la aplicación esté publicada con HTTPS. Todo se midió en localhost y en el equipo de desarrollo. Tampoco se midió el tiempo de carga completo de cada pantalla, solo los tiempos del servidor.
+
+Los siguientes pasos son publicar la aplicación con HTTPS, probarla con la usuaria, correr la prueba de PTS con sus ventas reales y agregar el historial de compras con precio pagado. Después vendrían los precios de venta, las fotos de los productos y el catálogo.
+
+\end{document}
